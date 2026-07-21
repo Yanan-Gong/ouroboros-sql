@@ -8,7 +8,6 @@ Dataset: https://github.com/bird-bench/mini_dev (CC BY-SA 4.0)
 """
 
 import hashlib
-import json
 import shutil
 import sys
 import urllib.request
@@ -71,8 +70,6 @@ def arrange(extract_dir: Path) -> tuple[int, Path]:
     questions_dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(question_files[0], questions_dest)
 
-    with questions_dest.open() as f:
-        n_questions = len(json.load(f))
     return moved, questions_dest
 
 

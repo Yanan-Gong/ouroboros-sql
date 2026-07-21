@@ -131,7 +131,6 @@ def build(verbose: bool = True) -> dict[str, Any]:
     for ex in usable:
         by_difficulty.setdefault(ex.get("difficulty", "unknown"), []).append(ex)
 
-    total_needed = sum(SPLIT_SIZES.values())
     total_usable = len(usable)
     splits: dict[str, list[dict[str, Any]]] = {name: [] for name in SPLIT_SIZES}
     for _difficulty, bucket in sorted(by_difficulty.items()):
