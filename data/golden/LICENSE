@@ -1,0 +1,10 @@
+The JSON files in this directory are derived from the BIRD mini-dev benchmark
+(https://github.com/bird-bench/mini_dev) and are therefore distributed under the
+Creative Commons Attribution-ShareAlike 4.0 International license (CC BY-SA 4.0),
+unlike the source code of this repository (MIT).
+
+Attribution: BIRD Team, "BIRD-SQL Mini-Dev", https://bird-bench.github.io/
+License text: https://creativecommons.org/licenses/by-sa/4.0/
+
+The hand-written adversarial probe entries (ids `adversarial_*`) are original to
+this repository and released under the same CC BY-SA 4.0 terms for simplicity.

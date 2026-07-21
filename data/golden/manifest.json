@@ -1,0 +1,26 @@
+{
+  "seed": 20260721,
+  "source": "BIRD mini-dev (mini_dev_sqlite.json)",
+  "source_examples": 498,
+  "usable_after_filters": 479,
+  "rejected": {
+    "huge_result": 15,
+    "not_select": 2,
+    "timeout": 2
+  },
+  "splits": {
+    "train": 126,
+    "val": 63,
+    "holdout": 63
+  },
+  "adversarial_per_split": {
+    "train": 6,
+    "val": 3,
+    "holdout": 3
+  },
+  "filters": {
+    "gold_sql_timeout_seconds": 2.0,
+    "gold_sql_must_return_rows": true,
+    "gold_sql_row_limit": 500
+  }
+}

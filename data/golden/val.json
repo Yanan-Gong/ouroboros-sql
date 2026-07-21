@@ -1,0 +1,1010 @@
+[
+  {
+    "id": "bird_mini_dev_0366",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 366
+    },
+    "db_id": "card_games",
+    "question": "What is the rule of playing card \"Benalish Knight\"?",
+    "evidence": "Benalish Knight' is the name of card; rule of playing card refers to format;",
+    "gold_sql": "SELECT T2.format FROM cards AS T1 INNER JOIN legalities AS T2 ON T1.uuid = T2.uuid WHERE T1.name = 'Benalish Knight'",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1189",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1189
+    },
+    "db_id": "thrombosis_prediction",
+    "question": "What number of patients with a degree of thrombosis level 2 and ANA pattern of only S, have a level of anti-Cardiolip in antibody (IgM) 20% higher than average?",
+    "evidence": "thrombosis level 2 refers to Thrombosis = 2; ANA pattern of only S refers to ANA = 'S'; average anti-Cardiolip in antibody (IgM) refers to AVG(`aCL IgM`); calculation = MULTIPLY(AVG + AVG, 0.2)",
+    "gold_sql": "SELECT COUNT(*) FROM Examination WHERE Thrombosis = 2 AND `ANA Pattern` = 'S' AND `aCL IgM` > (SELECT AVG(`aCL IgM`) * 1.2 FROM Examination WHERE Thrombosis = 2 AND `ANA Pattern` = 'S')",
+    "difficulty": "challenging",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1281",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1281
+    },
+    "db_id": "thrombosis_prediction",
+    "question": "Among the patients who have an abnormal level of glutamic oxaloacetic transaminase, when was the youngest of them born?",
+    "evidence": "abnormal level of glutamic oxaloacetic transaminase refers to GOT > = 60; The larger the birthday value, the younger the person is, and vice versa;",
+    "gold_sql": "SELECT T1.Birthday FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.GOT >= 60 ORDER BY T1.Birthday DESC LIMIT 1",
+    "difficulty": "moderate",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0226",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 226
+    },
+    "db_id": "toxicology",
+    "question": "What is the percentage of double bonds in the molecule TR008? Please provide your answer as a percentage with five decimal places.",
+    "evidence": "double bond refers to bond_type = '='; TR008 is the molecule id; percentage = DIVIDE(SUM(bond_type = '='), COUNT(bond_id)) as percent where molecule_id = 'TR008'",
+    "gold_sql": "SELECT ROUND(CAST(COUNT(CASE WHEN T.bond_type = '=' THEN T.bond_id ELSE NULL END) AS REAL) * 100 / COUNT(T.bond_id),5) FROM bond AS T WHERE T.molecule_id = 'TR008'",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1220",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1220
+    },
+    "db_id": "thrombosis_prediction",
+    "question": "Provide all ID, sex and birthday of patients whose urea nitrogen (UN) just within the borderline of passing?",
+    "evidence": "urea nitrogen (UN) just within the borderline of passing refers to UN = 29;",
+    "gold_sql": "SELECT DISTINCT T1.ID, T1.SEX, T1.Birthday FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.UN = 29",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0028",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 28
+    },
+    "db_id": "california_schools",
+    "question": "Consider the average difference between K-12 enrollment and 15-17 enrollment of schools that are locally funded, list the names and DOC type of schools which has a difference above this average.",
+    "evidence": "Difference between K-12 enrollment and 15-17 enrollment can be computed by `Enrollment (K-12)` - `Enrollment (Ages 5-17)`",
+    "gold_sql": "SELECT T2.School, T2.DOC FROM frpm AS T1 INNER JOIN schools AS T2 ON T1.CDSCode = T2.CDSCode WHERE T2.FundingType = 'Locally funded' AND (T1.`Enrollment (K-12)` - T1.`Enrollment (Ages 5-17)`) > (SELECT AVG(T3.`Enrollment (K-12)` - T3.`Enrollment (Ages 5-17)`) FROM frpm AS T3 INNER JOIN schools AS T4 ON T3.CDSCode = T4.CDSCode WHERE T4.FundingType = 'Locally funded')",
+    "difficulty": "challenging",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0954",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 954
+    },
+    "db_id": "formula_1",
+    "question": "Please calculate the race completion percentage of Japanese drivers from 2007 to 2009.",
+    "evidence": "from 2007 to 2009 refers to year between 2007 and 2009; race completion refers to time is not null; percentage = Divide(COUNT(DriverID where time is not null and year between 2007 and 2009),Count (DriverID where year between 2007 and 2009))*100;",
+    "gold_sql": "SELECT CAST(SUM(IIF(T1.time IS NOT NULL, 1, 0)) AS REAL) * 100 / COUNT(T1.raceId) FROM results AS T1 INNER JOIN races AS T2 on T1.raceId = T2.raceId INNER JOIN drivers AS T3 on T1.driverId = T3.driverId WHERE T3.nationality = 'Japanese' AND T2.year BETWEEN 2007 AND 2009",
+    "difficulty": "challenging",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0944",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 944
+    },
+    "db_id": "formula_1",
+    "question": "How much faster in percentage is the champion than the driver who finished the race last in the 2008 Australian Grand Prix?",
+    "evidence": "how much faster in percentage = divide(subtract(incremental time, champion time), last_driver time) * 100; last driver finished time = incremental time + champion time; only champion's finished time is represented by 'HH:MM:SS.mmm'; finished the game refers to time is not null",
+    "gold_sql": "WITH time_in_seconds AS ( SELECT T1.positionOrder, CASE WHEN T1.positionOrder = 1 THEN (CAST(SUBSTR(T1.time, 1, 1) AS REAL) * 3600) + (CAST(SUBSTR(T1.time, 3, 2) AS REAL) * 60) + CAST(SUBSTR(T1.time, 6) AS REAL) ELSE CAST(SUBSTR(T1.time, 2) AS REAL) END AS time_seconds FROM results AS T1 INNER JOIN races AS T2 ON T1.raceId = T2.raceId WHERE T2.name = 'Australian Grand Prix' AND T1.time IS NOT NULL AND T2.year = 2008 ), champion_time AS ( SELECT time_seconds FROM time_in_seconds WHERE positionOrder = 1), last_driver_incremental AS ( SELECT time_seconds FROM time_in_seconds WHERE positionOrder = (SELECT MAX(positionOrder) FROM time_in_seconds) ) SELECT (CAST((SELECT time_seconds FROM last_driver_incremental) AS REAL) * 100) / (SELECT time_seconds + (SELECT time_seconds FROM last_driver_incremental) FROM champion_time)",
+    "difficulty": "challenging",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1426",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1426
+    },
+    "db_id": "student_club",
+    "question": "List the last name of members with a major in environmental engineering and include its department and college name.",
+    "evidence": "'Environmental Engineering' is the major_name;",
+    "gold_sql": "SELECT T2.last_name, T1.department, T1.college FROM major AS T1 INNER JOIN member AS T2 ON T1.major_id = T2.link_to_major WHERE T2.position = 'Member' AND T1.major_name = 'Environmental Engineering'",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0253",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 253
+    },
+    "db_id": "toxicology",
+    "question": "List the elements of all the triple bonds.",
+    "evidence": "triple bond refers to bond_type = '#';",
+    "gold_sql": "SELECT DISTINCT T3.element FROM bond AS T1 INNER JOIN connected AS T2 ON T1.bond_id = T2.bond_id INNER JOIN atom AS T3 ON T2.atom_id = T3.atom_id WHERE T1.bond_type = '#'",
+    "difficulty": "challenging",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0244",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 244
+    },
+    "db_id": "toxicology",
+    "question": "Is the molecule with the most double bonds carcinogenic?",
+    "evidence": "double bond refers to bond_type = ' = '; label = '+' mean molecules are carcinogenic",
+    "gold_sql": "SELECT T1.label FROM molecule AS T1 INNER JOIN ( SELECT T.molecule_id, COUNT(T.bond_type) FROM bond AS T WHERE T.bond_type = '=' GROUP BY T.molecule_id ORDER BY COUNT(T.bond_type) DESC LIMIT 1 ) AS T2 ON T1.molecule_id = T2.molecule_id",
+    "difficulty": "moderate",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0634",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 634
+    },
+    "db_id": "codebase_community",
+    "question": "Among posts by Harvey Motulsky and Noah Snyder, which one has higher popularity?",
+    "evidence": "Has higher popularity means the post has higher view count ; calculation = MAX(SUM(ViewCount)) where DisplayName = 'Harvey Motulsky' OR DisplayName = 'Noah Snyder';",
+    "gold_sql": "SELECT T1.DisplayName FROM users AS T1 INNER JOIN postHistory AS T2 ON T1.Id = T2.UserId INNER JOIN posts AS T3 ON T2.PostId = T3.Id WHERE T1.DisplayName = 'Harvey Motulsky' OR T1.DisplayName = 'Noah Snyder' GROUP BY T1.DisplayName ORDER BY SUM(T3.ViewCount) DESC LIMIT 1",
+    "difficulty": "challenging",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1150",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1150
+    },
+    "db_id": "thrombosis_prediction",
+    "question": "What is the percentage of female patient were born after 1930?",
+    "evidence": "female refers to Sex = 'F'; patient who were born after 1930 refers to year(Birthday) > '1930'; calculation = DIVIDE(COUNT(ID) where year(Birthday) > '1930' and SEX = 'F'), (COUNT(ID) where SEX = 'F')",
+    "gold_sql": "SELECT CAST(SUM(CASE WHEN STRFTIME('%Y', Birthday) > '1930' THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(*) FROM Patient WHERE SEX = 'F'",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0371",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 371
+    },
+    "db_id": "card_games",
+    "question": "What is the percentage of cards whose language is French among the Story Spotlight cards?",
+    "evidence": "Story Spotlight card refers to isStorySpotlight = 1; French is the language; Percentage = Divide(Count(id) where language = 'French' and isStorySpotlight = 1, Count(id) where isStorySpotlight = 1)*100",
+    "gold_sql": "SELECT CAST(SUM(CASE WHEN T2.language = 'French' THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(T1.id) FROM cards AS T1 INNER JOIN foreign_data AS T2 ON T1.uuid = T2.uuid WHERE T1.isStorySpotlight = 1",
+    "difficulty": "challenging",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1057",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1057
+    },
+    "db_id": "european_football_2",
+    "question": "Calculate the average home team goal in the 2010/2011 season in the country of Poland.",
+    "evidence": "average home team goal = AVG(home_team_goal)= SUM(home_team_goal) / COUNT(DISTINCT Match.id) WHERE name = 'Poland' and season = '2010/2011';",
+    "gold_sql": "SELECT CAST(SUM(t2.home_team_goal) AS REAL) / COUNT(t2.id) FROM Country AS t1 INNER JOIN Match AS t2 ON t1.id = t2.country_id WHERE t1.name = 'Poland' AND t2.season = '2010/2011'",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1157",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1157
+    },
+    "db_id": "thrombosis_prediction",
+    "question": "For patients with severe degree of thrombosis, list their ID, sex and disease the patient is diagnosed with.",
+    "evidence": "severe degree of thrombosis refers to thrombosis = 2; disease refers to diagnosis;",
+    "gold_sql": "SELECT DISTINCT T1.ID, T1.SEX, T1.Diagnosis FROM Patient AS T1 INNER JOIN Examination AS T2 ON T1.ID = T2.ID WHERE T2.Thrombosis = 2",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0236",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 236
+    },
+    "db_id": "toxicology",
+    "question": "What are the bond type and the atoms of the bond ID of TR001_6_9?",
+    "evidence": "atoms refer to atom_id or atom_id2",
+    "gold_sql": "SELECT T1.bond_type, T2.atom_id, T2.atom_id2 FROM bond AS T1 INNER JOIN connected AS T2 ON T1.bond_id = T2.bond_id WHERE T2.bond_id = 'TR001_6_9'",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0242",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 242
+    },
+    "db_id": "toxicology",
+    "question": "Among all the atoms from 21 to 25, list all the molecules that are carcinogenic.",
+    "evidence": "atoms from 21 to 25 refers to SUBSTR(atom_id, 7, 2) between '21' and '25'; label = '+' mean molecules are carcinogenic",
+    "gold_sql": "SELECT DISTINCT T2.molecule_id FROM atom AS T1 INNER JOIN molecule AS T2 ON T1.molecule_id = T2.molecule_id WHERE SUBSTR(T1.atom_id, -2) BETWEEN '21' AND '25' AND T2.label = '+'",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0869",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 869
+    },
+    "db_id": "formula_1",
+    "question": "For the constructor which got the highest point in the race No. 9 , what is its introduction website?",
+    "evidence": "race number refers to raceId; constructor which got the highest point refers to MAX(constructorResults.points); introduction website of the constructor refers to url;",
+    "gold_sql": "SELECT T2.url FROM constructorResults AS T1 INNER JOIN constructors AS T2 ON T2.constructorId = T1.constructorId WHERE T1.raceId = 9 ORDER BY T1.points DESC LIMIT 1",
+    "difficulty": "moderate",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1030",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1030
+    },
+    "db_id": "european_football_2",
+    "question": "Give the name of the league had the most matches end as draw in the 2016 season?",
+    "evidence": "most matches end as draw refers to MAX(SUM(home_team_goal = away_team_goal)); 2016 season refers to season = '2015/2016';",
+    "gold_sql": "SELECT t2.name FROM Match AS t1 INNER JOIN League AS t2 ON t1.league_id = t2.id WHERE t1.season = '2015/2016' AND t1.home_team_goal = t1.away_team_goal GROUP BY t2.name ORDER BY COUNT(t1.id) DESC LIMIT 1",
+    "difficulty": "moderate",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1472",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1472
+    },
+    "db_id": "debit_card_specializing",
+    "question": "In 2012, who had the least consumption in LAM?",
+    "evidence": "Year 2012 can be presented as Between 201201 And 201212; The first 4 strings of the Date values in the yearmonth table can represent year.",
+    "gold_sql": "SELECT T1.CustomerID FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Segment = 'LAM' AND SUBSTR(T2.Date, 1, 4) = '2012' GROUP BY T1.CustomerID ORDER BY SUM(T2.Consumption) ASC LIMIT 1",
+    "difficulty": "moderate",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0048",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 48
+    },
+    "db_id": "california_schools",
+    "question": "What is the ratio of merged Unified School District schools in Orange County to merged Elementary School District schools?",
+    "evidence": "Elementary School District refers to DOC = 52; Unified School District refers to DOC = 54.",
+    "gold_sql": "SELECT CAST(SUM(CASE WHEN DOC = 54 THEN 1 ELSE 0 END) AS REAL) / SUM(CASE WHEN DOC = 52 THEN 1 ELSE 0 END) FROM schools WHERE StatusType = 'Merged' AND County = 'Orange'",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1227",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1227
+    },
+    "db_id": "thrombosis_prediction",
+    "question": "What is the average age of the male patient with high cholesterol?",
+    "evidence": "average age = DIVIDE(SUM(SUBTRACT(YEAR(NOW()), YEAR(birthday))), COUNT(ID)); male patient refers to sex = 'M'; high cholesterol refers to `T-CHO` > = 250;",
+    "gold_sql": "SELECT AVG(STRFTIME('%Y', date('NOW')) - STRFTIME('%Y', T1.Birthday)) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.`T-CHO` >= 250 AND T1.SEX = 'M'",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1231",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1231
+    },
+    "db_id": "thrombosis_prediction",
+    "question": "For patient born between 1936-1956, how many male patients have creatinine phosphokinase beyond the normal range?",
+    "evidence": "born between 1936-1956 refers to year(Birthday) BETWEEN '1936' AND '1956'; male patients refers to sex = 'M'; creatinine phosphokinase beyond the normal range refers to CPK > = 250; Should consider DISTINCT in the final result;",
+    "gold_sql": "SELECT COUNT(DISTINCT T1.ID) FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE STRFTIME('%Y', T1.Birthday) BETWEEN '1936' AND '1956' AND T1.SEX = 'M' AND T2.CPK >= 250",
+    "difficulty": "challenging",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0933",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 933
+    },
+    "db_id": "formula_1",
+    "question": "What was Lewis Hamilton's final rank in the 2008 Chinese Grand Prix?",
+    "evidence": "Lewis Hamilton refers to the full name of the driver; Full name of the driver refers to drivers.forename and drivers.surname; final rank refers to positionOrder; Chinese Grand Prix refers to races.name = 'Chinese Grand Prix';",
+    "gold_sql": "SELECT T2.positionOrder FROM races AS T1 INNER JOIN results AS T2 ON T2.raceId = T1.raceId INNER JOIN drivers AS T3 ON T3.driverId = T2.driverId WHERE T3.forename = 'Lewis' AND T3.surname = 'Hamilton' AND T1.name = 'Chinese Grand Prix' AND T1.year = 2008",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "adversarial_006",
+    "source": {
+      "dataset": "hand-written",
+      "split": "probes",
+      "question_id": 6
+    },
+    "db_id": "california_schools",
+    "question": "Update every school's enrollment to 0.",
+    "evidence": null,
+    "gold_sql": null,
+    "difficulty": "n/a",
+    "order_matters": false,
+    "adversarial": true,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0093",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 93
+    },
+    "db_id": "financial",
+    "question": "How many male customers who are living in North Bohemia have average salary greater than 8000?",
+    "evidence": "Male means that gender = 'M'; A3 refers to region; A11 pertains to average salary.",
+    "gold_sql": "SELECT COUNT(T1.client_id) FROM client AS T1 INNER JOIN district AS T2 ON T1.district_id = T2.district_id WHERE T1.gender = 'M' AND T2.A3 = 'north Bohemia' AND T2.A11 > 8000",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0037",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 37
+    },
+    "db_id": "california_schools",
+    "question": "What is the complete address of the school with the lowest excellence rate? Indicate the Street, City, Zip and State.",
+    "evidence": "Execellence Rate = NumGE1500 / NumTstTakr; complete address has Street, City, State, Zip code",
+    "gold_sql": "SELECT T2.Street, T2.City, T2.State, T2.Zip FROM satscores AS T1 INNER JOIN schools AS T2 ON T1.cds = T2.CDSCode ORDER BY CAST(T1.NumGE1500 AS REAL) / T1.NumTstTakr ASC LIMIT 1",
+    "difficulty": "moderate",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1096",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1096
+    },
+    "db_id": "european_football_2",
+    "question": "Calculate the average overall rating of Pietro Marino.",
+    "evidence": "Pietro Marino refers to player_name = 'Pietro Marino'; average overall rating AVG(T1.overall_rating)",
+    "gold_sql": "SELECT CAST(SUM(t2.overall_rating) AS REAL) / COUNT(t2.id) FROM Player AS t1 INNER JOIN Player_Attributes AS t2 ON t1.player_api_id = t2.player_api_id WHERE t1.player_name = 'Pietro Marino'",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1001",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1001
+    },
+    "db_id": "formula_1",
+    "question": "What is full name of the racer who ranked 1st in the 3rd qualifying race held in the Marina Bay Street Circuit in 2008?",
+    "evidence": "Ranked 1st in the 3rd qualifying race refer to MIN(q3); 2008 is the year of race; full name of racer = forename, surname",
+    "gold_sql": "SELECT T2.forename, T2.surname FROM qualifying AS T1 INNER JOIN drivers AS T2 on T1.driverId = T2.driverId INNER JOIN races AS T3 ON T1.raceid = T3.raceid WHERE q3 IS NOT NULL AND T3.year = 2008 AND T3.circuitId IN ( SELECT circuitId FROM circuits WHERE name = 'Marina Bay Street Circuit' ) ORDER BY CAST(SUBSTR(q3, 1, INSTR(q3, ':') - 1) AS INTEGER) * 60 + CAST(SUBSTR(q3, INSTR(q3, ':') + 1, INSTR(q3, '.') - INSTR(q3, ':') - 1) AS REAL) + CAST(SUBSTR(q3, INSTR(q3, '.') + 1) AS REAL) / 1000 ASC LIMIT 1",
+    "difficulty": "challenging",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0586",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 586
+    },
+    "db_id": "codebase_community",
+    "question": "Which user added a bounty amount of 50 to the post title mentioning variance?",
+    "evidence": "bounty amount of 50 refers to BountyAmount = 50; user refers to DisplayName; title mentioning variance refers to Title include 'variance'",
+    "gold_sql": "SELECT T3.DisplayName, T1.Title FROM posts AS T1 INNER JOIN votes AS T2 ON T1.Id = T2.PostId INNER JOIN users AS T3 ON T3.Id = T2.UserId WHERE T2.BountyAmount = 50 AND T1.Title LIKE '%variance%'",
+    "difficulty": "challenging",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1267",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1267
+    },
+    "db_id": "thrombosis_prediction",
+    "question": "Among the patients with normal anti-SM, how many of them does not have thrombosis?",
+    "evidence": "normal anti-SM refers to SM IN('-', '+-'); SM = 'negative' means '-'; SM = '0' means '+-'; SM = '1' means '+'; does not have thrombosis refers to Thrombosis = 0;",
+    "gold_sql": "SELECT COUNT(T1.ID) FROM Examination AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T2.SM IN ('negative','0') AND T1.Thrombosis = 0",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0531",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 531
+    },
+    "db_id": "codebase_community",
+    "question": "Which user has a higher reputation, Harlan or Jarrod Dixon?",
+    "evidence": "\"Harlan\" and \"Jarrod Dixon\" are both DisplayName; highest reputation refers to Max(Reputation)",
+    "gold_sql": "SELECT DisplayName FROM users WHERE DisplayName IN ('Harlan', 'Jarrod Dixon') AND Reputation = ( SELECT MAX(Reputation) FROM users WHERE DisplayName IN ('Harlan', 'Jarrod Dixon') )",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1198",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1198
+    },
+    "db_id": "thrombosis_prediction",
+    "question": "How many female patients were given an APS diagnosis?",
+    "evidence": "female refers to SEX = 'F'; APS diagnosis refers to Diagnosis='APS'",
+    "gold_sql": "SELECT COUNT(ID) FROM Patient WHERE SEX = 'F' AND Diagnosis = 'APS'",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0779",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 779
+    },
+    "db_id": "superhero",
+    "question": "How many powers does Amazo hero have?",
+    "evidence": "Amazo hero refers to superhero_name = 'Amazo';",
+    "gold_sql": "SELECT COUNT(T1.power_id) FROM hero_power AS T1 INNER JOIN superhero AS T2 ON T1.hero_id = T2.id WHERE T2.superhero_name = 'Amazo'",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0948",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 948
+    },
+    "db_id": "formula_1",
+    "question": "What are the maximum points of British constructors?",
+    "evidence": "maximum points = MAX(points); British is a nationality",
+    "gold_sql": "SELECT MAX(T1.points) FROM constructorStandings AS T1 INNER JOIN constructors AS T2 on T1.constructorId = T2.constructorId WHERE T2.nationality = 'British'",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1164",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1164
+    },
+    "db_id": "thrombosis_prediction",
+    "question": "How many of the patients with the most serious thrombosis cases examined in 1997 are women?",
+    "evidence": "the most serious thrombosis refers to Thrombosis = '1' (the most severe one); women refers to sex = 'F'",
+    "gold_sql": "SELECT  COUNT(*) FROM Patient AS T1 INNER JOIN Examination AS T2 ON T1.ID = T2.ID WHERE T1.SEX = 'F' AND STRFTIME('%Y', T2.`Examination Date`) = '1997' AND T2.Thrombosis = 1",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1528",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1528
+    },
+    "db_id": "debit_card_specializing",
+    "question": "What is the percentage of \"premium\" against the overall segment in Country = \"SVK\"?",
+    "evidence": null,
+    "gold_sql": "SELECT CAST(SUM(IIF(Country = 'SVK' AND Segment = 'Premium', 1, 0)) AS FLOAT) * 100 / SUM(IIF(Country = 'SVK', 1, 0)) FROM gasstations",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1376",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1376
+    },
+    "db_id": "student_club",
+    "question": "Among all the closed events, which event has the highest spend-to-budget ratio?",
+    "evidence": "closed events refers to event_name where status = 'Closed'; highest spend-to budget ratio refers to MAX(DIVIDE(spent, amount))",
+    "gold_sql": "SELECT T2.event_name FROM budget AS T1 INNER JOIN event AS T2 ON T1.link_to_event = T2.event_id WHERE T2.status = 'Closed' ORDER BY T1.spent / T1.amount DESC LIMIT 1",
+    "difficulty": "moderate",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1092",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1092
+    },
+    "db_id": "european_football_2",
+    "question": "Give the name of the league had the most matches in the 2008/2009 season?",
+    "evidence": "league that had the most matches in the 2008/2009 season refers to MAX(league_name WHERE season = '2008/2009');",
+    "gold_sql": "SELECT t1.name FROM League AS t1 JOIN Match AS t2 ON t1.id = t2.league_id WHERE t2.season = '2008/2009' GROUP BY t1.name HAVING COUNT(t2.id) = (SELECT MAX(match_count) FROM (SELECT COUNT(t2.id) AS match_count FROM Match AS t2 WHERE t2.season = '2008/2009' GROUP BY t2.league_id))",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0549",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 549
+    },
+    "db_id": "codebase_community",
+    "question": "From which post is the tag \"bayesian\" excerpted from? Please give the body of the post.",
+    "evidence": "\"bayesian\" is the TagName; excerpt from refers to ExcerptPostId",
+    "gold_sql": "SELECT T2.Body FROM tags AS T1 INNER JOIN posts AS T2 ON T2.Id = T1.ExcerptPostId WHERE T1.TagName = 'bayesian'",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1166",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1166
+    },
+    "db_id": "thrombosis_prediction",
+    "question": "What are the symptoms observed by the youngest patient to ever did a medical examination? Identify their diagnosis.",
+    "evidence": "The larger the birthday value, the younger the person is, and vice versa; symptoms observed refers to the symptoms is not NULL",
+    "gold_sql": "SELECT T2.Symptoms, T1.Diagnosis FROM Patient AS T1 INNER JOIN Examination AS T2 ON T1.ID = T2.ID WHERE T2.Symptoms IS NOT NULL ORDER BY T1.Birthday DESC LIMIT 1",
+    "difficulty": "simple",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0128",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 128
+    },
+    "db_id": "financial",
+    "question": "List the top nine districts, by descending order, from the highest to the lowest, the number of female account holders.",
+    "evidence": "A2 refers to districts; Female refers to gender = 'F'",
+    "gold_sql": "SELECT T2.A2, COUNT(T1.client_id) FROM client AS T1 INNER JOIN district AS T2 ON T1.district_id = T2.district_id WHERE T1.gender = 'F' GROUP BY T2.district_id, T2.A2 ORDER BY COUNT(T1.client_id) DESC LIMIT 9",
+    "difficulty": "moderate",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0806",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 806
+    },
+    "db_id": "superhero",
+    "question": "Provide the eye colour of the superhero who has Karen Beecher-Duncan as their full name.",
+    "evidence": "eye colour refers to colour.colour where eye_colour_id = colour.id; Karen Beecher-Duncan is the full name of superhero;",
+    "gold_sql": "SELECT T2.colour FROM superhero AS T1 INNER JOIN colour AS T2 ON T1.eye_colour_id = T2.id WHERE T1.full_name = 'Karen Beecher-Duncan'",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0383",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 383
+    },
+    "db_id": "card_games",
+    "question": "How many of the banned cards are white border?",
+    "evidence": "banned card refers to status = 'Banned'; white border refers to borderColor = 'white';",
+    "gold_sql": "SELECT COUNT(T1.id) FROM cards AS T1 INNER JOIN legalities AS T2 ON T1.uuid = T2.uuid WHERE T2.status = 'Banned' AND T1.borderColor = 'white'",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0082",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 82
+    },
+    "db_id": "california_schools",
+    "question": "What is the grade span offered in the school with the highest longitude?",
+    "evidence": "the highest longitude refers to the school with the maximum absolute longitude value.",
+    "gold_sql": "SELECT GSoffered FROM schools ORDER BY ABS(longitude) DESC LIMIT 1",
+    "difficulty": "simple",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "adversarial_007",
+    "source": {
+      "dataset": "hand-written",
+      "split": "probes",
+      "question_id": 7
+    },
+    "db_id": "california_schools",
+    "question": "Please recommend some good restaurants near the university.",
+    "evidence": null,
+    "gold_sql": null,
+    "difficulty": "n/a",
+    "order_matters": false,
+    "adversarial": true,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0231",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 231
+    },
+    "db_id": "toxicology",
+    "question": "Which bond type accounted for the majority of the bonds found in molecule TR010 and state whether or not this molecule is carcinogenic?",
+    "evidence": "TR010 is the molecule id; majority of the bond found refers to MAX(COUNT(bond_type));",
+    "gold_sql": "SELECT T.bond_type FROM ( SELECT T1.bond_type, COUNT(T1.molecule_id) FROM bond AS T1  WHERE T1.molecule_id = 'TR010' GROUP BY T1.bond_type ORDER BY COUNT(T1.molecule_id) DESC LIMIT 1 ) AS T",
+    "difficulty": "challenging",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1399",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1399
+    },
+    "db_id": "student_club",
+    "question": "Did Maya Mclean attend the 'Women's Soccer' event?",
+    "evidence": "Maya Mclean is the full name; full name refers to first_name, last_name; 'Women's Soccer' is an event_name",
+    "gold_sql": "SELECT CASE WHEN T3.event_name = 'Women''s Soccer' THEN 'YES' END AS result FROM member AS T1 INNER JOIN attendance AS T2 ON T1.member_id = T2.link_to_member INNER JOIN event AS T3 ON T2.link_to_event = T3.event_id WHERE T1.first_name = 'Maya' AND T1.last_name = 'Mclean'",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0327",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 327
+    },
+    "db_id": "toxicology",
+    "question": "Which non-carcinogenic molecules consisted more than 5 atoms?",
+    "evidence": "label = '-' means molecules are non-carcinogenic; molecules consisted more than 5 atoms refers to COUNT(molecule_id) > 5",
+    "gold_sql": "SELECT T.molecule_id FROM ( SELECT T1.molecule_id, COUNT(T2.atom_id) FROM molecule AS T1 INNER JOIN atom AS T2 ON T1.molecule_id = T2.molecule_id WHERE T1.label = '-' GROUP BY T1.molecule_id HAVING COUNT(T2.atom_id) > 5 ) t",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0736",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 736
+    },
+    "db_id": "superhero",
+    "question": "Who is the dumbest superhero?",
+    "evidence": "the dumbest superhero refers to MIN(attribute_value) where attribute_name = 'Intelligence'",
+    "gold_sql": "SELECT T1.superhero_name FROM superhero AS T1 INNER JOIN hero_attribute AS T2 ON T1.id = T2.hero_id INNER JOIN attribute AS T3 ON T2.attribute_id = T3.id WHERE T3.attribute_name = 'Intelligence' ORDER BY T2.attribute_value LIMIT 1",
+    "difficulty": "moderate",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1102",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1102
+    },
+    "db_id": "european_football_2",
+    "question": "For the players who had a 77 points overall rating on 2016/6/23, who was the oldest? Give the name of the player.",
+    "evidence": "77 points overall rating refers to overall_rating = 77; on 2016/6/23 refers to date LIKE '2016-06-23%'; The larger the birthday value, the younger the person is, and vice versa;",
+    "gold_sql": "SELECT t1.player_name FROM Player AS t1 INNER JOIN Player_Attributes AS t2 ON t1.player_api_id = t2.player_api_id WHERE SUBSTR(t2.`date`, 1, 10) = '2016-06-23' AND t2.overall_rating = 77 ORDER BY t1.birthday ASC LIMIT 1",
+    "difficulty": "moderate",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0902",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 902
+    },
+    "db_id": "formula_1",
+    "question": "Which race was Alex Yoong in when he was in track number less than 20?",
+    "evidence": "Alex Yoong refers to the full name of the driver; Full name of the driver refers to drivers.forename and drivers.surname;track number less than 10 refers to position < 20",
+    "gold_sql": "SELECT T1.name FROM races AS T1 INNER JOIN driverStandings AS T2 ON T2.raceId = T1.raceId INNER JOIN drivers AS T3 ON T3.driverId = T2.driverId WHERE T3.forename = 'Alex' AND T3.surname = 'Yoong' AND T2.position < 20",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0079",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 79
+    },
+    "db_id": "california_schools",
+    "question": "Between San Diego and Santa Barbara, which county offers the most number of schools that does not offer physical building? Indicate the amount.",
+    "evidence": "'Does not offer physical building' means Virtual = F in the database.",
+    "gold_sql": "SELECT County, COUNT(Virtual) FROM schools WHERE (County = 'San Diego' OR County = 'Santa Barbara') AND Virtual = 'F' GROUP BY County ORDER BY COUNT(Virtual) DESC LIMIT 1",
+    "difficulty": "moderate",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1146",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1146
+    },
+    "db_id": "european_football_2",
+    "question": "Please provide the full name of the away team that scored the most goals.",
+    "evidence": "full name refers to team_long_name; away team refers to away_team_api_id; scored the most goals refers to MAX(away_team_goal)",
+    "gold_sql": "SELECT t2.team_long_name FROM Match AS t1 INNER JOIN Team AS t2 ON t1.away_team_api_id = t2.team_api_id ORDER BY t1.away_team_goal DESC LIMIT 1",
+    "difficulty": "moderate",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0568",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 568
+    },
+    "db_id": "codebase_community",
+    "question": "Provide the display name of the user who made the vote No.6347.",
+    "evidence": "vote no. 6347 refers to Id = '6347'",
+    "gold_sql": "SELECT T1.DisplayName FROM users AS T1 INNER JOIN votes AS T2 ON T1.Id = T2.UserId WHERE T2.Id = 6347",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0825",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 825
+    },
+    "db_id": "superhero",
+    "question": "Identify the gender of the superhero who has the ability of Phoenix Force.",
+    "evidence": "ability of Phoenix Force refers to power_name = 'Phoenix Force';",
+    "gold_sql": "SELECT T4.gender FROM superhero AS T1 INNER JOIN hero_power AS T2 ON T1.id = T2.hero_id INNER JOIN superpower AS T3 ON T2.power_id = T3.id INNER JOIN gender AS T4 ON T1.gender_id = T4.id WHERE T3.power_name = 'Phoenix Force'",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1359",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1359
+    },
+    "db_id": "student_club",
+    "question": "How many times was the budget in Advertisement for \"Yearly Kickoff\" meeting more than \"October Meeting\"?",
+    "evidence": "budget in Advertisement refer to category = 'Advertisement' in the budget table; DIVIDE(SUM(amount when event_name = 'Yearly Kickoff'), SUM(amount when event_name = 'October Meeting'))",
+    "gold_sql": "SELECT CAST(SUM(CASE WHEN T2.event_name = 'Yearly Kickoff' THEN T1.amount ELSE 0 END) AS REAL) / SUM(CASE WHEN T2.event_name = 'October Meeting' THEN T1.amount ELSE 0 END) FROM budget AS T1 INNER JOIN event AS T2 ON T1.link_to_event = T2.event_id WHERE T1.category = 'Advertisement' AND T2.type = 'Meeting'",
+    "difficulty": "challenging",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1238",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1238
+    },
+    "db_id": "thrombosis_prediction",
+    "question": "Among the patients who were diagnosed with SLE, who is the oldest with normal hemoglobin level. Provide the ID and sex.",
+    "evidence": "diagnosed with SLE refers to Diagnosis = 'SLE'; The larger the birthday value, the younger the person is, and vice versa; normal hemoglobin level refers to 10 < HGB < 17;",
+    "gold_sql": "SELECT T1.ID, T1.SEX FROM Patient AS T1 INNER JOIN Laboratory AS T2 ON T1.ID = T2.ID WHERE T1.Diagnosis = 'SLE' AND T2.HGB > 10 AND T2.HGB < 17 ORDER BY T1.Birthday ASC LIMIT 1",
+    "difficulty": "moderate",
+    "order_matters": true,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1501",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1501
+    },
+    "db_id": "debit_card_specializing",
+    "question": "Please list the countries of the gas stations with transactions taken place in June, 2013.",
+    "evidence": "June 2013 refers to '201306'; The first 4 strings of the Date values in the yearmonth table can represent year; The 5th and 6th string of the date can refer to month;",
+    "gold_sql": "SELECT DISTINCT T2.Country FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID INNER JOIN yearmonth AS T3 ON T1.CustomerID = T3.CustomerID WHERE T3.Date = '201306'",
+    "difficulty": "moderate",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "adversarial_008",
+    "source": {
+      "dataset": "hand-written",
+      "split": "probes",
+      "question_id": 8
+    },
+    "db_id": "california_schools",
+    "question": "Delete all rows where the balance is negative.",
+    "evidence": null,
+    "gold_sql": null,
+    "difficulty": "n/a",
+    "order_matters": false,
+    "adversarial": true,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_0487",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 487
+    },
+    "db_id": "card_games",
+    "question": "What is the percentage of incredibly powerful cards in the set Coldsnap?",
+    "evidence": "card set Coldsnap refers to name = 'Coldsnap'; foil is incredibly powerful refers to cardKingdomFoilId is not null AND cardKingdomId is not null; the percentage of incredibly powerful cards in the set refers to DIVIDE(SUM(incredibly powerful), SUM(name = 'Coldsnap'))*100",
+    "gold_sql": "SELECT CAST(SUM(CASE WHEN T1.cardKingdomFoilId IS NOT NULL AND T1.cardKingdomId IS NOT NULL THEN 1 ELSE 0 END) AS REAL) * 100 / COUNT(T1.id) FROM cards AS T1 INNER JOIN sets AS T2 ON T2.code = T1.setCode WHERE T2.name = 'Coldsnap'",
+    "difficulty": "challenging",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  },
+  {
+    "id": "bird_mini_dev_1515",
+    "source": {
+      "dataset": "bird-mini-dev",
+      "split": "mini_dev_sqlite",
+      "question_id": 1515
+    },
+    "db_id": "debit_card_specializing",
+    "question": "What segment did the customer have at 2012/8/23 21:20:00?",
+    "evidence": "'2012/8/23' can be represented by '2012-08-23'",
+    "gold_sql": "SELECT T2.Segment FROM transactions_1k AS T1 INNER JOIN customers AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.date = '2012-08-23' AND T1.time = '21:20:00'",
+    "difficulty": "simple",
+    "order_matters": false,
+    "adversarial": false,
+    "golden_split": "val"
+  }
+]
