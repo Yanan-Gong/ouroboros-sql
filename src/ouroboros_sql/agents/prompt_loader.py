@@ -48,16 +48,34 @@ def load_sections(agent_key: str, prompts_dir: Path = PROMPTS_DIR) -> list[Secti
     return sections
 
 
-def render_instructions(agent_key: str, prompts_dir: Path = PROMPTS_DIR) -> str:
-    """Final instruction string for an agent: sections joined, empty ones dropped."""
+def render_instructions(
+    agent_key: str,
+    prompts_dir: Path = PROMPTS_DIR,
+    memory: object | None = None,
+) -> str:
+    """Final instruction string for an agent: sections joined, empty ones dropped.
+
+    When a StrategyMemory is given, its rendered entries for this agent are
+    appended to the file's own `strategy`/`exemplars` sections — file content
+    (written by the optimizer) and memory content compose rather than compete.
+    """
+    memory_strategy = memory_exemplars = ""
+    if memory is not None:
+        memory_strategy, memory_exemplars = memory.render_sections(agent_key)  # type: ignore[attr-defined]
+
     parts = []
     for section in load_sections(agent_key, prompts_dir):
-        if not section.text or section.text.startswith("(No learned"):
-            continue
+        text = section.text
+        if text.startswith("(No learned"):
+            text = ""
         if section.name == "strategy":
-            parts.append("## Learned strategies\n" + section.text)
+            text = "\n".join(t for t in (text, memory_strategy) if t)
+            if text:
+                parts.append("## Learned strategies\n" + text)
         elif section.name == "exemplars":
-            parts.append("## Worked examples\n" + section.text)
-        else:
-            parts.append(section.text)
+            text = "\n\n".join(t for t in (text, memory_exemplars) if t)
+            if text:
+                parts.append("## Worked examples\n" + text)
+        elif text:
+            parts.append(text)
     return "\n\n".join(parts)

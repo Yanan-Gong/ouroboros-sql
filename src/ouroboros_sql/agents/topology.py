@@ -13,6 +13,7 @@ from agents import Agent, Model, ModelSettings
 
 from ..config import settings
 from .guardrails import build_relevance_guardrail
+from .memory import StrategyMemory
 from .prompt_loader import render_instructions
 from .tools import EXECUTION_TOOLS, EXPLORATION_TOOLS
 
@@ -41,6 +42,7 @@ def build_pipeline(
     *,
     guardrail_model: str | Model | None = None,
     with_relevance_guardrail: bool = True,
+    memory: StrategyMemory | None = None,
 ) -> Pipeline:
     """Construct the agent graph.
 
@@ -59,7 +61,7 @@ def build_pipeline(
     summarizer = Agent(
         name="Summarizer",
         handoff_description="Turns the executed SQL result into the final user-facing answer.",
-        instructions=render_instructions("summarizer"),
+        instructions=render_instructions("summarizer", memory=memory),
         model=model,
     )
     # Intermediate agents may only act (tools or handoffs), never emit a plain
@@ -68,7 +70,7 @@ def build_pipeline(
     validator = Agent(
         name="Validator",
         handoff_description="Validates and executes candidate SQL, drives the retry loop.",
-        instructions=render_instructions("validator"),
+        instructions=render_instructions("validator", memory=memory),
         tools=list(EXECUTION_TOOLS),
         model=model,
         model_settings=act_only,
@@ -76,7 +78,7 @@ def build_pipeline(
     sql_writer = Agent(
         name="SQLWriter",
         handoff_description="Writes one SQLite SELECT from the linked schema.",
-        instructions=render_instructions("sql_writer"),
+        instructions=render_instructions("sql_writer", memory=memory),
         handoffs=[validator],
         model=model,
         model_settings=act_only,
@@ -84,7 +86,7 @@ def build_pipeline(
     schema_linker = Agent(
         name="SchemaLinker",
         handoff_description="Explores the database schema and selects relevant tables/columns.",
-        instructions=render_instructions("schema_linker"),
+        instructions=render_instructions("schema_linker", memory=memory),
         tools=list(EXPLORATION_TOOLS),
         handoffs=[sql_writer],
         model=model,
@@ -92,7 +94,7 @@ def build_pipeline(
     )
     orchestrator = Agent(
         name="Orchestrator",
-        instructions=render_instructions("orchestrator"),
+        instructions=render_instructions("orchestrator", memory=memory),
         handoffs=[schema_linker],
         input_guardrails=(
             [build_relevance_guardrail(guardrail_model)] if with_relevance_guardrail else []

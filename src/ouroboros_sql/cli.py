@@ -18,16 +18,18 @@ def query(
     db: str = typer.Option(..., "--db", help="Database id, e.g. california_schools"),
     interactive: bool = typer.Option(False, help="Multi-turn session with follow-ups"),
     verbose: bool = typer.Option(False, "-v", help="Show the trajectory (tools, handoffs)"),
+    memory: bool = typer.Option(True, help="Render strategy memory into agent prompts"),
 ) -> None:
     """Answer an analytics question over one of the downloaded databases."""
     from agents.memory import SQLiteSession
 
+    from .agents.memory import StrategyMemory
     from .agents.topology import build_pipeline
     from .bootstrap import configure_openai
     from .runner import run_one
 
     configure_openai()
-    pipeline = build_pipeline()
+    pipeline = build_pipeline(memory=StrategyMemory.load() if memory else None)
     session = SQLiteSession(f"cli-{db}") if interactive else None
 
     async def ask(q: str) -> None:
@@ -81,6 +83,7 @@ def eval(
     concurrency: int = typer.Option(8, help="Concurrent pipeline runs"),
     limit: int = typer.Option(None, help="Only the first N examples (smoke tests)"),
     judge: bool = typer.Option(False, help="Also score trajectories with the LLM judge"),
+    memory: bool = typer.Option(True, help="Render strategy memory into agent prompts"),
     run_id: str = typer.Option(None, help="Resume/name a run directory"),
 ) -> None:
     """Run the golden set through the pipeline and compute trajectory metrics."""
@@ -98,6 +101,7 @@ def eval(
             concurrency=concurrency,
             limit=limit,
             with_judge=judge,
+            with_memory=memory,
             run_id=run_id,
         )
     )

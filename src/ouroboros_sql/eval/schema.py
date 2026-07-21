@@ -131,6 +131,7 @@ class RunMetadata(BaseModel):
     judge_model: str | None
     base_url_host: str | None
     seed: int
+    memory_entries: int = 0
     started_at: str
     package_version: str
 

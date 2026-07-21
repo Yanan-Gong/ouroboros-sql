@@ -17,6 +17,7 @@ import uuid
 from pathlib import Path
 
 from .. import __version__
+from ..agents.memory import StrategyMemory
 from ..agents.topology import Pipeline, build_pipeline
 from ..config import settings
 from ..db.catalog import Catalog
@@ -120,6 +121,7 @@ async def run_eval(
     concurrency: int = 8,
     limit: int | None = None,
     with_judge: bool = False,
+    with_memory: bool = True,
     run_id: str | None = None,
     progress: bool = True,
 ) -> tuple[EvalMetrics, Path]:
@@ -136,7 +138,8 @@ async def run_eval(
 
     catalog = Catalog(settings.databases_dir)
     gold_cache = GoldResultCache(catalog)
-    pipeline = build_pipeline()
+    memory = StrategyMemory.load() if with_memory else None
+    pipeline = build_pipeline(memory=memory)
     judge = build_judge(settings.judge_model) if with_judge else None
 
     metadata = RunMetadata(
@@ -148,6 +151,7 @@ async def run_eval(
         judge_model=str(settings.judge_model) if with_judge else None,
         base_url_host=_base_url_host(),
         seed=0,
+        memory_entries=len(memory.entries) if memory else 0,
         started_at=datetime.datetime.now(tz=datetime.UTC).isoformat(),
         package_version=__version__,
     )
