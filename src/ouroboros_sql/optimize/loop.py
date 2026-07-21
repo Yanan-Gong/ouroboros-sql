@@ -104,7 +104,10 @@ async def run_loop(
     for k in range(start_iteration, start_iteration + config.max_iterations):
         it_dir = iterations_dir / f"{k:02d}"
         it_dir.mkdir(parents=True, exist_ok=True)
-        log = (lambda msg: print(f"[iter {k}] {msg}", flush=True)) if progress else (lambda _: None)
+
+        def log(msg: str, _k: int = k) -> None:
+            if progress:
+                print(f"[iter {_k}] {msg}", flush=True)
 
         # 1. Observe: fresh failures from train under the current state.
         log(f"train eval ({config.train_limit} x {config.train_repeats})...")
@@ -152,7 +155,7 @@ async def run_loop(
 
         # 5. Gate on val.
         log(f"val eval (full x {config.val_repeats})...")
-        candidate, val_dir = await run_eval(
+        candidate, _val_dir = await run_eval(
             "val",
             repeats=config.val_repeats,
             concurrency=config.concurrency,

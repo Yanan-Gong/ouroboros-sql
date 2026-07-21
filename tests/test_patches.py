@@ -105,7 +105,6 @@ def test_apply_and_rollback_roundtrip(sandbox):
     snapshot, diffs = apply_patchset(ps, prompts_dir, memory_path)
 
     # Patch landed: section replaced, frozen role untouched, markers intact.
-    patched = (prompts_dir / "sql_writer.md").read_text()
     sections = {s.name: s for s in load_sections("sql_writer", prompts_dir)}
     assert sections["strategy"].text == "- Always CAST ratio numerators AS REAL."
     assert sections["role"].frozen
