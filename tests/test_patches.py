@@ -232,3 +232,22 @@ class TestNormalization:
         normalized, notes = normalize_patchset(ps, prompts_dir)
         assert notes == []
         assert normalized.prompt_patches[0].new_text == "- ok"
+
+
+def test_state_fingerprint_tracks_mutations(sandbox):
+    from ouroboros_sql.optimize.patches import apply_patchset, rollback, state_fingerprint
+
+    prompts_dir, memory_path = sandbox
+    before = state_fingerprint(prompts_dir, memory_path)
+    assert before == state_fingerprint(prompts_dir, memory_path)  # deterministic
+
+    ps = PatchSet(
+        rationale="r",
+        prompt_patches=[
+            PromptSectionPatch(agent_key="sql_writer", section="strategy", new_text="- changed")
+        ],
+    )
+    snapshot, _ = apply_patchset(ps, prompts_dir, memory_path)
+    assert state_fingerprint(prompts_dir, memory_path) != before
+    rollback(snapshot, prompts_dir, memory_path)
+    assert state_fingerprint(prompts_dir, memory_path) == before

@@ -26,7 +26,7 @@ from ..eval.harness import run_eval
 from ..eval.report_agent import build_eval_report, write_failure_analysis
 from ..eval.schema import EvalMetrics
 from .optimizer_agent import propose_patchset
-from .patches import apply_patchset, normalize_patchset, rollback
+from .patches import apply_patchset, normalize_patchset, rollback, state_fingerprint
 
 ITERATIONS_DIR = REPO_ROOT / "iterations"
 
@@ -117,7 +117,7 @@ async def run_loop(
             concurrency=config.concurrency,
             limit=config.train_limit,
             with_judge=False,
-            run_id=f"loop-{stamp}-it{k:02d}-train",
+            run_id=f"loop-{stamp}-it{k:02d}-train-{state_fingerprint()}",
             progress=False,
         )
 
@@ -155,7 +155,7 @@ async def run_loop(
             repeats=config.val_repeats,
             concurrency=config.concurrency,
             with_judge=False,
-            run_id=f"loop-{stamp}-it{k:02d}-val",
+            run_id=f"loop-{stamp}-it{k:02d}-val-{state_fingerprint()}",
             progress=False,
         )
         (it_dir / "val_metrics.json").write_text(candidate.model_dump_json(indent=2))

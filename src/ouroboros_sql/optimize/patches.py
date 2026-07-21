@@ -295,3 +295,19 @@ def normalize_patchset(
     )
     validate_patchset(normalized, prompts_dir)
     return normalized, notes
+
+
+def state_fingerprint(prompts_dir: Path = PROMPTS_DIR, memory_path: Path | None = None) -> str:
+    """Short hash of everything the optimizer can mutate (prompts + memory).
+
+    Loop run ids embed this so the harness's resume-from-cache can only ever
+    hit records evaluated under the *identical* system state — a date-based id
+    once silently reused a previous attempt's val records as a gate verdict.
+    """
+    import hashlib
+
+    h = hashlib.sha256()
+    for key in AGENT_SCOPES:
+        h.update((prompts_dir / f"{key}.md").read_bytes())
+    h.update(StrategyMemory.load(memory_path).model_dump_json().encode())
+    return h.hexdigest()[:10]
