@@ -19,16 +19,28 @@
        ],
        "created": "2026-07-21",
        "hit_count": 0
-@@ -106,6 +94,44 @@
+@@ -106,6 +94,43 @@
        ],
        "created": "2026-07-21",
        "hit_count": 0
 +    },
 +    {
-+      "id": "writer-proportion-full-universe",
++      "id": "writer-semantics-inversion",
 +      "kind": "pitfall",
 +      "scope": "sql_writer",
-+      "text": "'Proportion/percentage of X that [condition]': denominator MUST be COUNT(*) over ALL X rows, not narrowed by an unrelated filter. Numerator counts rows meeting the condition exactly, honoring negations (e.g. 'do not have a text box' = isTextless=0). Cast 100.0*num/den to REAL.",
++      "text": "For yes/no attribute questions, explicitly restate the truth condition before coding — do not return a raw column and let the summarizer guess. 'well-finished'/'resolved' post means never closed -> ClosedDate IS NULL (a NON-null ClosedDate means the opposite). Verify polarity so booleans are not inverted.",
++      "provenance": [
++        "wrong_result",
++        "exemplar-1"
++      ],
++      "created": "2026-07-21",
++      "hit_count": 0
++    },
++    {
++      "id": "writer-full-predicate-coverage",
++      "kind": "heuristic",
++      "scope": "sql_writer",
++      "text": "List every qualifier in the question and map each to SQL before finalizing. 'highest potential score for crossing' needs the crossing metric AND the 'potential' qualifier AND per-player latest-record dedup — not MAX(crossing) alone. Missing a qualifier or dedup is a wrong_result.",
 +      "provenance": [
 +        "wrong_result",
 +        "exemplar-3"
@@ -37,27 +49,14 @@
 +      "hit_count": 0
 +    },
 +    {
-+      "id": "writer-superlative-exact-attribute",
-+      "kind": "pitfall",
-+      "scope": "sql_writer",
-+      "text": "For 'highest/top ... for <attribute>', take MAX/ORDER BY over the exact attribute named — never a different column (e.g. do not use 'crossing' as if it were 'potential'). Add every other qualifier (foot, work rate) as its own WHERE clause.",
-+      "provenance": [
-+        "wrong_result",
-+        "exemplar-2"
-+      ],
-+      "created": "2026-07-21",
-+      "hit_count": 0
-+    },
-+    {
-+      "id": "writer-datetime-and-name-resolution",
++      "id": "linker-decode-enum-codes",
 +      "kind": "heuristic",
-+      "scope": "sql_writer",
-+      "text": "Never equality-match a DATETIME literal (stored with '.0' fractional suffix); use DATE(col)= or a range. Resolve names via first_name AND last_name, publishers/gender/category via their lookup tables — never against an ID column. Map evaluative wording to the documented column/value, not NULL-guessing.",
++      "scope": "schema_linker",
++      "text": "Decode enum/lookup codes for the writer instead of matching the question word literally: account.frequency 'POPLATEK TYDNE'=weekly, 'POPLATEK MESICNE'=monthly. Always include the lookup join table for FK id columns (colour/gender/publisher for superhero) so filters/outputs use labels, not ids.",
 +      "provenance": [
-+        "wrong_result",
 +        "wrong_tables",
-+        "exemplar-1",
-+        "exemplar-0772"
++        "exemplar-0772",
++        "exemplar-0186"
 +      ],
 +      "created": "2026-07-21",
 +      "hit_count": 0

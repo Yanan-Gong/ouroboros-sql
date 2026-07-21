@@ -1,0 +1,53 @@
+{
+  "rationale": "The largest failure class is SQLWriter mishandling 'highest/top per group' semantics (global MAX + unrelated filters, multiple dated rows per entity) and boolean-polarity mapping — neither is covered by existing memory, so I add two sharp writer pitfalls and tighten the writer strategy to fold qualifying predicates inside MAX subqueries. I also add a schema_linker memory to surface coded categoricals with their distinct code values so 'weekly' maps to the right code rather than a wrong one. These target wrong_result and wrong_tables, the dominant classes, with deterministic procedures that should lift A_mean and reduce variance.",
+  "prompt_patches": [
+    {
+      "agent_key": "sql_writer",
+      "section": "strategy",
+      "new_text": "Before writing SQL, restate EACH noun-phrase as a concrete column+predicate and confirm every phrase is consumed. Phrases may span two columns (e.g. preferred_foot='left' AND attacking_work_rate=...); never collapse them. For multi-valued TEXT columns (colors, categories, tags) use LIKE '%X%' / instr(col,'X'), NOT col='X'. For TEXT enums match the sampled literal exactly (case+full string). For datetime with fractional seconds filter by range or strftime('%Y-%m-%d %H:%M:%S',col)='...', never = 'HH:MM:SS'. For 'highest/top/max' questions: put ALL qualifying predicates INSIDE the subquery computing MAX/MIN so the extreme is taken over the qualifying population, not the global table. When a table has multiple time-stamped rows per entity, pick the latest row per entity (MAX(date) subquery) BEFORE ranking. Check flag polarity against the evidence note before mapping (e.g. ClosedDate IS NULL = not closed). Interpret 'comes with foreign translation' as EXISTS a joined foreign_data row, not language!='English'. Pick the column at the grain carrying the measure. Terminal output MUST be an executable SELECT, never a plan or clarifying question."
+    }
+  ],
+  "memory_upserts": [
+    {
+      "id": "writer-extreme-within-population",
+      "kind": "pitfall",
+      "scope": "sql_writer",
+      "text": "For 'highest/top/max/min' with additional predicates, place ALL qualifying filters inside the MAX/MIN subquery: WHERE col=(SELECT MAX(col) FROM t WHERE preferred_foot='left') AND preferred_foot='left'. A global MAX then filtering by foot returns the wrong extreme.",
+      "provenance": [
+        "wrong_result",
+        "Ex3"
+      ]
+    },
+    {
+      "id": "writer-latest-row-per-entity",
+      "kind": "pitfall",
+      "scope": "sql_writer",
+      "text": "When a table has multiple dated rows per entity (e.g. Player_Attributes has many rows per player), select the latest row per entity (via MAX(date) subquery or correlated filter) before ranking or reading an attribute; otherwise you mix stale rows.",
+      "provenance": [
+        "wrong_result",
+        "Ex3"
+      ]
+    },
+    {
+      "id": "writer-flag-polarity",
+      "kind": "pitfall",
+      "scope": "sql_writer",
+      "text": "For quality/boolean phrasings ('well-finished','closed','active') confirm flag polarity from the evidence note before mapping. A closed post (ClosedDate IS NOT NULL) is NOT well-finished; 'not closed' = ClosedDate IS NULL. Do not conflate a related timestamp (comment time) with entity state.",
+      "provenance": [
+        "wrong_result",
+        "Ex1"
+      ]
+    },
+    {
+      "id": "linker-coded-categorical-values",
+      "kind": "heuristic",
+      "scope": "schema_linker",
+      "text": "When the question references a coded categorical (statement frequency, status, segment), include the filter column PLUS its distinct code values and the code->label mapping in the handoff (e.g. account.frequency: 'POPLATEK MESICNE'=monthly, 'POPLATEK TYDNE'=weekly). Do not hand off table names only.",
+      "provenance": [
+        "wrong_tables",
+        "Ex3"
+      ]
+    }
+  ],
+  "memory_deletes": []
+}

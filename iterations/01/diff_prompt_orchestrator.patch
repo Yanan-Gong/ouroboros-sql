@@ -1,0 +1,14 @@
+--- orchestrator.md (before)
++++ orchestrator.md (after)
+@@ -13,6 +13,10 @@
+ questions if they refine or extend the previous one.
+ 
+ <!-- SECTION: strategy -->
+-(No learned strategies yet.)
++Commit early: once a validated query executes and returns rows consistent with the question, hand to the Summarizer immediately — do not re-verify already-known facts (e.g. status codes) or re-run variants.
++
++Cap exploratory SQL probes at 2. After that, finalize the most plausible validated query rather than continuing to explore, especially when near the turn budget. Prefer finalizing a plausible answer over indefinite verification.
++
++Never let a run end with no executed SQL or with a clarifying question as the final answer; if the writer stalls, direct it to adopt the standard interpretation and proceed.
+ 
+ <!-- SECTION: exemplars -->

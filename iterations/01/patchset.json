@@ -1,53 +1,52 @@
 {
-  "rationale": "The largest failure class is wrong SQL semantics (proportion universe, superlative mis-scoping, literal/datetime resolution) plus a no-SQL stall cluster, so I sharpen sql_writer strategy with a deterministic proportion/superlative/literal-resolution procedure and a best-effort default rule. I add a schema_linker output-contract requirement for join paths and literal-resolution maps, and an orchestrator budget cap to stop exploration loops burning turns. These convert judgment calls into fixed procedures, targeting both A_mean and U90.",
+  "rationale": "The largest failure class is SQLWriter wrong_result from unmapped question predicates and yes/no semantics inversion, plus no_sql clarification stalls; I add a decomposition strategy and a semantics-inversion pitfall to force every qualifier into SQL and proceed without asking. I strengthen SchemaLinker with a lookup/enum decode heuristic (frequency codes, publisher/gender lookups) so joins and human-readable filters aren't dropped, and add an orchestrator commit-and-cap rule to stop turn-budget exhaustion. These target the highest-leverage, highest-volume issues and reduce variance by replacing judgment calls with deterministic procedures.",
   "prompt_patches": [
     {
       "agent_key": "sql_writer",
       "section": "strategy",
-      "new_text": "Deterministic procedure before emitting SQL:\n1. PROPORTION/PERCENTAGE 'of X that [condition]': denominator = COUNT(*) over ALL X rows; numerator = COUNT of rows meeting the condition exactly as worded. Honor negations literally ('do NOT have a text box' = isTextless=0). Never narrow the denominator by an unrelated filter. Compute 100.0*num/den with REAL casting.\n2. SUPERLATIVE ('highest/most/top ... for <attribute>'): take MAX/ORDER BY over the exact attribute named, NOT a different column. Then map every other noun phrase in the question (foot, work rate, gender) to its own WHERE clause. Re-read the question and verify each noun phrase = one clause.\n3. LITERALS: never equality-match a DATETIME directly (stored values include a '.0' fractional suffix); use DATE(col)=... or a range. Resolve person names via first_name AND last_name, categories/publishers/gender via their lookup tables — never embed a text literal against an ID column.\n4. AMBIGUITY: adopt the most literal reading, state the assumption in one line, and STILL emit executable SQL. Never hand back with zero SQL attempts unless no executable interpretation exists."
+      "new_text": "Decompose EVERY question into its full list of predicates and qualifiers BEFORE writing SQL, and verify each maps to a specific column/condition or ORDER BY: nouns, adjectives ('potential', 'latest'), yes/no attributes, and every named filter. Cover multi-clause questions completely — answering only one part is the top wrong_result cause.\n\nFor yes/no or attribute questions, restate the truth condition explicitly and encode it, e.g. 'well-finished'/'not closed' -> ClosedDate IS NULL; return the boolean/computed value, not a raw column for the summarizer to interpret.\n\nFor ratios, averages-per-unit, and percentages: CAST numerator AS REAL and build numerator/denominator over the SAME filtered rows; percentages use 100.0 * SUM(CASE WHEN cond THEN 1 ELSE 0 END) / COUNT(*).\n\nFor 'top/highest/most' single-entity questions add explicit ORDER BY <metric> DESC LIMIT 1.\n\nNEVER end a turn with a clarifying question. State your assumption inline (BIRD convention: 'code' = the literal code column; percentage = per-distinct-entity) and hand off SQL every time."
     },
     {
       "agent_key": "schema_linker",
       "section": "strategy",
-      "new_text": "Output contract to SQLWriter must include two explicit sections:\n1. REQUIRED JOIN PATH: for each entity/concept in the question, give the exact table.column and full join chain that resolves it (e.g. member.first_name/last_name; expense.cost; expense->budget->event for event-date filters). If the question mentions a concept (e.g. 'events') not directly on the fact table, flag the bridge table the writer must include.\n2. LITERAL-RESOLUTION MAP: for each text/name/category/gender literal, name the lookup table+column to resolve it through (publisher_name via publisher join; gender via gender table) rather than matching an ID column. For any filtered column, report observed value format (case, codes, units, datetime '.0' suffix) from sample_rows so filters match stored values."
+      "new_text": "Pass exact column spellings from describe_table (casing/spaces); confirm ambiguous names against sample_rows before handoff.\n\nWhen a selected/filtered column is a foreign key to a lookup or enum table, ALWAYS include that lookup/join table and report the code->label mapping so the writer returns human-readable values and filters on the decoded label, not the raw id. Example: account.frequency 'POPLATEK TYDNE'=weekly, 'POPLATEK MESICNE'=monthly, 'POPLATEK PO OBRATU'=per transaction; superhero.eye_colour_id/gender_id/publisher_id join to colour/gender/publisher for names like publisher_name='Dark Horse Comics', gender='Female'.\n\nCall sample_rows on every column that will be filtered, and report observed value formats (case, codes, units) so filters match stored values exactly. If the question's word (e.g. 'weekly') differs from the stored code, decode it and give the writer the exact stored value."
     },
     {
       "agent_key": "orchestrator",
       "section": "strategy",
-      "new_text": "Budget control to avoid turn exhaustion:\n1. Once a syntactically valid candidate answer of the right shape exists, allow at most 2 further schema-exploration queries. Do not loop probing representation variants (K vs Kindergarten, GSserved vs Low/High Grade).\n2. If a representation ambiguity blocks progress, delegate ONE sample query to SchemaLinker to resolve it, then force commit.\n3. If the turn budget is near exhaustion, return the best already-executed result rather than a 'turn budget exceeded' non-answer. Never end with zero executed SQL when a plausible candidate ran."
+      "new_text": "Commit early: once a validated query executes and returns rows consistent with the question, hand to the Summarizer immediately — do not re-verify already-known facts (e.g. status codes) or re-run variants.\n\nCap exploratory SQL probes at 2. After that, finalize the most plausible validated query rather than continuing to explore, especially when near the turn budget. Prefer finalizing a plausible answer over indefinite verification.\n\nNever let a run end with no executed SQL or with a clarifying question as the final answer; if the writer stalls, direct it to adopt the standard interpretation and proceed."
     }
   ],
   "memory_upserts": [
     {
-      "id": "writer-proportion-full-universe",
+      "id": "writer-semantics-inversion",
       "kind": "pitfall",
       "scope": "sql_writer",
-      "text": "'Proportion/percentage of X that [condition]': denominator MUST be COUNT(*) over ALL X rows, not narrowed by an unrelated filter. Numerator counts rows meeting the condition exactly, honoring negations (e.g. 'do not have a text box' = isTextless=0). Cast 100.0*num/den to REAL.",
+      "text": "For yes/no attribute questions, explicitly restate the truth condition before coding — do not return a raw column and let the summarizer guess. 'well-finished'/'resolved' post means never closed -> ClosedDate IS NULL (a NON-null ClosedDate means the opposite). Verify polarity so booleans are not inverted.",
+      "provenance": [
+        "wrong_result",
+        "exemplar-1"
+      ]
+    },
+    {
+      "id": "writer-full-predicate-coverage",
+      "kind": "heuristic",
+      "scope": "sql_writer",
+      "text": "List every qualifier in the question and map each to SQL before finalizing. 'highest potential score for crossing' needs the crossing metric AND the 'potential' qualifier AND per-player latest-record dedup — not MAX(crossing) alone. Missing a qualifier or dedup is a wrong_result.",
       "provenance": [
         "wrong_result",
         "exemplar-3"
       ]
     },
     {
-      "id": "writer-superlative-exact-attribute",
-      "kind": "pitfall",
-      "scope": "sql_writer",
-      "text": "For 'highest/top ... for <attribute>', take MAX/ORDER BY over the exact attribute named — never a different column (e.g. do not use 'crossing' as if it were 'potential'). Add every other qualifier (foot, work rate) as its own WHERE clause.",
-      "provenance": [
-        "wrong_result",
-        "exemplar-2"
-      ]
-    },
-    {
-      "id": "writer-datetime-and-name-resolution",
+      "id": "linker-decode-enum-codes",
       "kind": "heuristic",
-      "scope": "sql_writer",
-      "text": "Never equality-match a DATETIME literal (stored with '.0' fractional suffix); use DATE(col)= or a range. Resolve names via first_name AND last_name, publishers/gender/category via their lookup tables — never against an ID column. Map evaluative wording to the documented column/value, not NULL-guessing.",
+      "scope": "schema_linker",
+      "text": "Decode enum/lookup codes for the writer instead of matching the question word literally: account.frequency 'POPLATEK TYDNE'=weekly, 'POPLATEK MESICNE'=monthly. Always include the lookup join table for FK id columns (colour/gender/publisher for superhero) so filters/outputs use labels, not ids.",
       "provenance": [
-        "wrong_result",
         "wrong_tables",
-        "exemplar-1",
-        "exemplar-0772"
+        "exemplar-0772",
+        "exemplar-0186"
       ]
     }
   ],

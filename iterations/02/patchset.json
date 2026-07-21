@@ -1,47 +1,51 @@
 {
-  "rationale": "The largest failure class is SQLWriter wrong_result on derived/qualitative answers, multi-part questions, and superlative-over-metric semantics; I add a strategy section plus two targeted memory pitfalls for those. I reinforce the no-clarification-stall rule at the orchestrator level so runs always produce executable SQL, and add a schema_linker memory for coded-enum/domain-literal confirmation.",
+  "rationale": "The two largest classes are SQLWriter misreading question semantics (noun-phrase-to-column mapping, multi-valued TEXT membership, enum literals) and SchemaLinker emitting prose handoffs that leave SQL ATTEMPTS empty. I add a phrase-mapping strategy plus membership/enum pitfalls for the writer, enforce SQL-only terminal output at the linker/summarizer level, and add a grain/sampled-table heuristic for the linker to move both A_mean and U90.",
   "prompt_patches": [
     {
       "agent_key": "sql_writer",
       "section": "strategy",
-      "new_text": "For every question: (1) List each interrogative clause ('which', 'how many', 'what', 'was it') and produce exactly one output column per clause — a multi-part question needs multiple columns. (2) When the question wants a qualitative/boolean verdict (e.g. 'was it well-finished', 'is it closed', 'single-bonded?'), do NOT return the raw underlying column; translate it to the implied label via CASE (e.g. ClosedDate IS NULL -> not closed). (3) For superlatives, identify the exact METRIC NOUN and rank on THAT column, not a similarly-named attribute ('highest potential score for crossing' ranks by potential among crossing-related rows). (4) Compute MAX/MIN over the filtered subset the question restricts to, and per-entity (GROUP BY the entity) rather than globally, unless the question is explicitly global. (5) 'average price per single item' = AVG(Price/Amount) per row (CAST AS REAL), not SUM(Price)/SUM(Amount). Verify every clause maps to a column before handoff. Never emit a clarifying question as your answer — state one assumption line and produce executable SQL."
+      "new_text": "Before writing SQL, restate EACH noun-phrase of the question as a concrete column+predicate, and confirm every phrase is consumed. Watch for phrases that map to two distinct columns (e.g. 'left foot while attacking' -> preferred_foot='left' AND attacking_work_rate=...; these are separate columns). For 'color'/'category'/tag membership on multi-valued TEXT columns, use LIKE '%X%' or instr(col,'X'), NOT col='X' (exact equality drops multi-valued rows). For exact equality on TEXT enums, match the sampled literal exactly (case and full string, e.g. 'POPLATEK MESICNE'). For datetime columns with fractional seconds, filter by range or strftime, never = 'HH:MM:SS'. Pick the table/column at the grain that carries the requested measure (e.g. expense.cost for 'spent in events', not budget.spent). Your terminal output MUST be an executable SELECT, never a plan."
     },
     {
-      "agent_key": "orchestrator",
+      "agent_key": "schema_linker",
       "section": "strategy",
-      "new_text": "This is a BIRD-style benchmark: the correct output is a single executable SQL query, not a dialogue. No agent may terminate a run by asking the user a clarifying question. If interpretation is ambiguous, instruct the responsible agent to adopt the most common/literal reading, state the assumption in one line, and proceed. Require that SchemaLinker and SQLWriter each hand off a concrete executable candidate query before control reaches the Validator; a handoff without runnable SQL is invalid and must be sent back. Ensure multi-part questions are decomposed so every interrogative clause maps to an output column."
+      "new_text": "Your output is a schema NOTE for the SQLWriter, never the final answer; the run's terminal step must be an executed SELECT. Never emit 'Handoff to SQLWriter' prose as the final answer. Choose the transaction-grain table that carries the requested measure (prefer expense.cost over budget.spent when the question says 'spent in events'). Flag any sampled/partial table (name contains _1k, or row count far below the PK domain) and warn results may be non-authoritative; prefer the full table when one exists. For enum/code columns, pass the exact code<->meaning mapping to the writer (e.g. account.frequency 'POPLATEK MESICNE'=monthly statement). Call sample_rows on every filtered column and report observed value formats (case, codes, units) so filters match stored values exactly."
+    },
+    {
+      "agent_key": "summarizer",
+      "section": "strategy",
+      "new_text": "Lead with the direct answer using only values present in the executed result rows; never round or reformat numbers unless asked. GUARDRAIL: if SQL ATTEMPTS is empty (no executed SELECT), do NOT emit a prose answer — re-invoke SQLWriter with the schema note and require an executed SELECT before summarizing. A prose 'handoff plan' is never a valid final answer."
     }
   ],
   "memory_upserts": [
     {
-      "id": "writer-qualitative-and-superlative",
+      "id": "writer-multivalue-membership",
       "kind": "pitfall",
       "scope": "sql_writer",
-      "text": "Two recurring wrong_result traps: (a) qualitative/boolean questions ('well-finished','closed','all single bonds') must map the raw column to the implied label via CASE (NULL ClosedDate -> not closed; bond_type='-' for all bonds -> single-bonded), never return the raw column. (b) Superlatives: rank on the exact metric noun and per-entity within the filtered subset, not the wrong attribute or a global MAX.",
+      "text": "On multi-valued TEXT columns (colors, colorIdentity, categories, tags), test membership with LIKE '%X%' or instr(col,'X'), not col='X'. Exact equality silently drops multi-valued rows (e.g. multicolor black cards where colors='B' misses 'WB').",
       "provenance": [
         "wrong_result",
-        "exemplar-1",
-        "exemplar-3"
+        "Ex1"
       ]
     },
     {
-      "id": "writer-multipart-one-col-each",
+      "id": "writer-phrase-to-column-audit",
       "kind": "heuristic",
       "scope": "sql_writer",
-      "text": "For multi-part questions, enumerate each sub-question and emit one output column per sub-question in asked order. Example: 'top spender, avg price per item, and currency' -> SELECT entity, AVG(Price/Amount) unit_price, currency. Prefer AVG(Price/Amount) for 'average price per single item', not SUM(Price)/SUM(Amount).",
+      "text": "Map every question noun-phrase to a column+predicate and verify none is dropped. Beware phrases spanning two columns: 'highest potential' -> MAX(potential), 'while attacking' -> attacking_work_rate (distinct from preferred_foot). Do not collapse two requirements into one column.",
       "provenance": [
         "wrong_result",
-        "exemplar-2"
+        "Ex3"
       ]
     },
     {
-      "id": "linker-coded-enum-domain-literals",
+      "id": "linker-sampled-table-flag",
       "kind": "pitfall",
       "scope": "schema_linker",
-      "text": "When a WHERE literal is a domain term, sample_rows the candidate column to confirm stored encoding before committing. card_games: colors/colorIdentity use single-letter codes (B=black,W=white,U=blue,R=red,G=green); card type filters belong on 'type'/'types', not 'originalType'. Pass the exact confirmed literal to the writer.",
+      "text": "Tables named _1k or with row counts far below the entity domain are samples; ranking/top-N over them is non-authoritative. Prefer the full table for 'top customer' style questions and warn the writer when only a sample exists.",
       "provenance": [
         "wrong_tables",
-        "exemplar-2"
+        "Ex3"
       ]
     }
   ],

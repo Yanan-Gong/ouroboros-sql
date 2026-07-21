@@ -1,14 +1,18 @@
 --- sql_writer.md (before)
 +++ sql_writer.md (after)
-@@ -16,6 +16,10 @@
+@@ -16,6 +16,14 @@
  your query, fix the specific error and hand back — do not start from scratch.
  
  <!-- SECTION: strategy -->
 -(No learned strategies yet.)
-+Deterministic procedure before emitting SQL:
-+1. PROPORTION/PERCENTAGE 'of X that [condition]': denominator = COUNT(*) over ALL X rows; numerator = COUNT of rows meeting the condition exactly as worded. Honor negations literally ('do NOT have a text box' = isTextless=0). Never narrow the denominator by an unrelated filter. Compute 100.0*num/den with REAL casting.
-+2. SUPERLATIVE ('highest/most/top ... for <attribute>'): take MAX/ORDER BY over the exact attribute named, NOT a different column. Then map every other noun phrase in the question (foot, work rate, gender) to its own WHERE clause. Re-read the question and verify each noun phrase = one clause.
-+3. LITERALS: never equality-match a DATETIME directly (stored values include a '.0' fractional suffix); use DATE(col)=... or a range. Resolve person names via first_name AND last_name, categories/publishers/gender via their lookup tables — never embed a text literal against an ID column.
-+4. AMBIGUITY: adopt the most literal reading, state the assumption in one line, and STILL emit executable SQL. Never hand back with zero SQL attempts unless no executable interpretation exists.
++Decompose EVERY question into its full list of predicates and qualifiers BEFORE writing SQL, and verify each maps to a specific column/condition or ORDER BY: nouns, adjectives ('potential', 'latest'), yes/no attributes, and every named filter. Cover multi-clause questions completely — answering only one part is the top wrong_result cause.
++
++For yes/no or attribute questions, restate the truth condition explicitly and encode it, e.g. 'well-finished'/'not closed' -> ClosedDate IS NULL; return the boolean/computed value, not a raw column for the summarizer to interpret.
++
++For ratios, averages-per-unit, and percentages: CAST numerator AS REAL and build numerator/denominator over the SAME filtered rows; percentages use 100.0 * SUM(CASE WHEN cond THEN 1 ELSE 0 END) / COUNT(*).
++
++For 'top/highest/most' single-entity questions add explicit ORDER BY <metric> DESC LIMIT 1.
++
++NEVER end a turn with a clarifying question. State your assumption inline (BIRD convention: 'code' = the literal code column; percentage = per-distinct-entity) and hand off SQL every time.
  
  <!-- SECTION: exemplars -->

@@ -1,0 +1,57 @@
+--- strategy_memory.json (before)
++++ strategy_memory.json (after)
+@@ -142,6 +142,54 @@
+       ],
+       "created": "2026-07-21",
+       "hit_count": 0
++    },
++    {
++      "id": "writer-extreme-within-population",
++      "kind": "pitfall",
++      "scope": "sql_writer",
++      "text": "For 'highest/top/max/min' with additional predicates, place ALL qualifying filters inside the MAX/MIN subquery: WHERE col=(SELECT MAX(col) FROM t WHERE preferred_foot='left') AND preferred_foot='left'. A global MAX then filtering by foot returns the wrong extreme.",
++      "provenance": [
++        "wrong_result",
++        "Ex3"
++      ],
++      "created": "2026-07-21",
++      "hit_count": 0
++    },
++    {
++      "id": "writer-latest-row-per-entity",
++      "kind": "pitfall",
++      "scope": "sql_writer",
++      "text": "When a table has multiple dated rows per entity (e.g. Player_Attributes has many rows per player), select the latest row per entity (via MAX(date) subquery or correlated filter) before ranking or reading an attribute; otherwise you mix stale rows.",
++      "provenance": [
++        "wrong_result",
++        "Ex3"
++      ],
++      "created": "2026-07-21",
++      "hit_count": 0
++    },
++    {
++      "id": "writer-flag-polarity",
++      "kind": "pitfall",
++      "scope": "sql_writer",
++      "text": "For quality/boolean phrasings ('well-finished','closed','active') confirm flag polarity from the evidence note before mapping. A closed post (ClosedDate IS NOT NULL) is NOT well-finished; 'not closed' = ClosedDate IS NULL. Do not conflate a related timestamp (comment time) with entity state.",
++      "provenance": [
++        "wrong_result",
++        "Ex1"
++      ],
++      "created": "2026-07-21",
++      "hit_count": 0
++    },
++    {
++      "id": "linker-coded-categorical-values",
++      "kind": "heuristic",
++      "scope": "schema_linker",
++      "text": "When the question references a coded categorical (statement frequency, status, segment), include the filter column PLUS its distinct code values and the code->label mapping in the handoff (e.g. account.frequency: 'POPLATEK MESICNE'=monthly, 'POPLATEK TYDNE'=weekly). Do not hand off table names only.",
++      "provenance": [
++        "wrong_tables",
++        "Ex3"
++      ],
++      "created": "2026-07-21",
++      "hit_count": 0
+     }
+   ],
+   "token_budget_per_agent": 900

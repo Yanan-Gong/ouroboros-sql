@@ -6,35 +6,35 @@
   "n_records": 252,
   "n_harness_errors": 0,
   "a_mean": {
-    "value": 0.5166666666666667,
-    "ci_low": 0.4166666666666667,
-    "ci_high": 0.6208333333333333,
+    "value": 0.5208333333333334,
+    "ci_low": 0.4125,
+    "ci_high": 0.6333333333333333,
     "n": 60
   },
   "a90": {
-    "value": 0.6683333333333333,
-    "ci_low": 0.5565833333333333,
-    "ci_high": 0.785,
+    "value": 0.62,
+    "ci_low": 0.51,
+    "ci_high": 0.7366666666666667,
     "n": 60
   },
   "a10": {
-    "value": 0.325,
-    "ci_low": 0.22333333333333333,
-    "ci_high": 0.43,
+    "value": 0.4116666666666667,
+    "ci_low": 0.295,
+    "ci_high": 0.535,
     "n": 60
   },
   "u90": {
-    "value": 0.3433333333333334,
-    "ci_low": 0.24666666666666667,
-    "ci_high": 0.45004166666666645,
+    "value": 0.20833333333333334,
+    "ci_low": 0.12654166666666666,
+    "ci_high": 0.2950416666666665,
     "n": 60
   },
   "judge_mean": null,
   "judge_u90": null,
   "judge_exec_agreement": null,
   "refusal_accuracy": {
-    "value": 1.0,
-    "ci_low": 1.0,
+    "value": 0.9166666666666666,
+    "ci_low": 0.75,
     "ci_high": 1.0,
     "n": 3
   },
@@ -45,9 +45,9 @@
     "n": 60
   },
   "schema_grounding_precision": {
-    "value": 0.9176388888888888,
-    "ci_low": 0.8759652777777777,
-    "ci_high": 0.9572291666666666,
+    "value": 0.9347222222222222,
+    "ci_low": 0.8993055555555556,
+    "ci_high": 0.9673611111111111,
     "n": 60
   },
   "schema_grounding_recall": {
@@ -57,12 +57,17 @@
     "n": 60
   },
   "wasted_call_rate": {
-    "value": 0.0,
+    "value": 0.0006944444444444444,
     "ci_low": 0.0,
-    "ci_high": 0.0,
-    "n": 59
+    "ci_high": 0.0020833333333333333,
+    "n": 60
   },
-  "retry_productivity": null,
+  "retry_productivity": {
+    "value": 1.0,
+    "ci_low": 1.0,
+    "ci_high": 1.0,
+    "n": 1
+  },
   "routing_accuracy": {
     "value": 1.0,
     "ci_low": 1.0,
@@ -70,21 +75,21 @@
     "n": 60
   },
   "completion_rate": {
-    "value": 0.8375,
-    "ci_low": 0.7791666666666667,
-    "ci_high": 0.8916666666666667,
+    "value": 0.9041666666666667,
+    "ci_low": 0.85,
+    "ci_high": 0.9458333333333333,
     "n": 60
   },
   "mean_ping_pong": {
-    "value": 0.0,
+    "value": 0.03333333333333333,
     "ci_low": 0.0,
-    "ci_high": 0.0,
+    "ci_high": 0.09166666666666666,
     "n": 60
   },
-  "mean_input_tokens": 43078.880952380954,
-  "mean_output_tokens": 3857.6984126984125,
-  "mean_requests": 11.162698412698413,
-  "latency_p50": 78.14324835402658,
-  "latency_p95": 129.5246464732918,
+  "mean_input_tokens": 48474.50793650794,
+  "mean_output_tokens": 2997.9761904761904,
+  "mean_requests": 11.59920634920635,
+  "latency_p50": 49.729990312014706,
+  "latency_p95": 79.10635751704103,
   "cost_per_100_usd": null
 }

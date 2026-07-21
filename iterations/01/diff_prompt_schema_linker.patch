@@ -1,12 +1,14 @@
 --- schema_linker.md (before)
 +++ schema_linker.md (after)
-@@ -17,6 +17,8 @@
+@@ -17,6 +17,10 @@
  irrelevant to the question.
  
  <!-- SECTION: strategy -->
 -(No learned strategies yet.)
-+Output contract to SQLWriter must include two explicit sections:
-+1. REQUIRED JOIN PATH: for each entity/concept in the question, give the exact table.column and full join chain that resolves it (e.g. member.first_name/last_name; expense.cost; expense->budget->event for event-date filters). If the question mentions a concept (e.g. 'events') not directly on the fact table, flag the bridge table the writer must include.
-+2. LITERAL-RESOLUTION MAP: for each text/name/category/gender literal, name the lookup table+column to resolve it through (publisher_name via publisher join; gender via gender table) rather than matching an ID column. For any filtered column, report observed value format (case, codes, units, datetime '.0' suffix) from sample_rows so filters match stored values.
++Pass exact column spellings from describe_table (casing/spaces); confirm ambiguous names against sample_rows before handoff.
++
++When a selected/filtered column is a foreign key to a lookup or enum table, ALWAYS include that lookup/join table and report the code->label mapping so the writer returns human-readable values and filters on the decoded label, not the raw id. Example: account.frequency 'POPLATEK TYDNE'=weekly, 'POPLATEK MESICNE'=monthly, 'POPLATEK PO OBRATU'=per transaction; superhero.eye_colour_id/gender_id/publisher_id join to colour/gender/publisher for names like publisher_name='Dark Horse Comics', gender='Female'.
++
++Call sample_rows on every column that will be filtered, and report observed value formats (case, codes, units) so filters match stored values exactly. If the question's word (e.g. 'weekly') differs from the stored code, decode it and give the writer the exact stored value.
  
  <!-- SECTION: exemplars -->

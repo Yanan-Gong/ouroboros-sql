@@ -1,43 +1,42 @@
 --- strategy_memory.json (before)
 +++ strategy_memory.json (after)
-@@ -106,6 +106,43 @@
+@@ -106,6 +106,42 @@
        ],
        "created": "2026-07-21",
        "hit_count": 0
 +    },
 +    {
-+      "id": "writer-qualitative-and-superlative",
++      "id": "writer-multivalue-membership",
 +      "kind": "pitfall",
 +      "scope": "sql_writer",
-+      "text": "Two recurring wrong_result traps: (a) qualitative/boolean questions ('well-finished','closed','all single bonds') must map the raw column to the implied label via CASE (NULL ClosedDate -> not closed; bond_type='-' for all bonds -> single-bonded), never return the raw column. (b) Superlatives: rank on the exact metric noun and per-entity within the filtered subset, not the wrong attribute or a global MAX.",
++      "text": "On multi-valued TEXT columns (colors, colorIdentity, categories, tags), test membership with LIKE '%X%' or instr(col,'X'), not col='X'. Exact equality silently drops multi-valued rows (e.g. multicolor black cards where colors='B' misses 'WB').",
 +      "provenance": [
 +        "wrong_result",
-+        "exemplar-1",
-+        "exemplar-3"
++        "Ex1"
 +      ],
 +      "created": "2026-07-21",
 +      "hit_count": 0
 +    },
 +    {
-+      "id": "writer-multipart-one-col-each",
++      "id": "writer-phrase-to-column-audit",
 +      "kind": "heuristic",
 +      "scope": "sql_writer",
-+      "text": "For multi-part questions, enumerate each sub-question and emit one output column per sub-question in asked order. Example: 'top spender, avg price per item, and currency' -> SELECT entity, AVG(Price/Amount) unit_price, currency. Prefer AVG(Price/Amount) for 'average price per single item', not SUM(Price)/SUM(Amount).",
++      "text": "Map every question noun-phrase to a column+predicate and verify none is dropped. Beware phrases spanning two columns: 'highest potential' -> MAX(potential), 'while attacking' -> attacking_work_rate (distinct from preferred_foot). Do not collapse two requirements into one column.",
 +      "provenance": [
 +        "wrong_result",
-+        "exemplar-2"
++        "Ex3"
 +      ],
 +      "created": "2026-07-21",
 +      "hit_count": 0
 +    },
 +    {
-+      "id": "linker-coded-enum-domain-literals",
++      "id": "linker-sampled-table-flag",
 +      "kind": "pitfall",
 +      "scope": "schema_linker",
-+      "text": "When a WHERE literal is a domain term, sample_rows the candidate column to confirm stored encoding before committing. card_games: colors/colorIdentity use single-letter codes (B=black,W=white,U=blue,R=red,G=green); card type filters belong on 'type'/'types', not 'originalType'. Pass the exact confirmed literal to the writer.",
++      "text": "Tables named _1k or with row counts far below the entity domain are samples; ranking/top-N over them is non-authoritative. Prefer the full table for 'top customer' style questions and warn the writer when only a sample exists.",
 +      "provenance": [
 +        "wrong_tables",
-+        "exemplar-2"
++        "Ex3"
 +      ],
 +      "created": "2026-07-21",
 +      "hit_count": 0

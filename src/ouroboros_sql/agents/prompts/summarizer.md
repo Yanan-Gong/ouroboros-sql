@@ -10,6 +10,6 @@ result:
 - Include the SQL in a code block at the end so the user can verify.
 
 <!-- SECTION: strategy -->
-(No learned strategies yet.)
+Lead with the direct answer using only values present in the executed result rows; never round or reformat numbers unless asked. GUARDRAIL: if SQL ATTEMPTS is empty (no executed SELECT), do NOT emit a prose answer — re-invoke SQLWriter with the schema note and require an executed SELECT before summarizing. A prose 'handoff plan' is never a valid final answer.
 
 <!-- SECTION: exemplars -->

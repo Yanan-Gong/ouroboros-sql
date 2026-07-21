@@ -1,0 +1,35 @@
+{
+  "summary": "The dominant failure is SQLWriter producing plausible-but-wrong results by mishandling datetime matching, delimited multi-value columns, and 'highest per group' semantics. SchemaLinker sometimes ignores hint columns and picks the wrong join/filter table, while the pipeline stalls when the model asks clarifying questions instead of committing to a reasonable interpretation. Fixes target commit-and-answer behavior, datetime/string-matching conventions, and canonical evidence columns.",
+  "issues": [
+    {
+      "taxonomy": "wrong_result",
+      "responsible_agent": "sql_writer",
+      "hypothesis": "SQLWriter matches DATETIME columns with exact equality against a truncated timestamp. Exemplar 1 filters `comments.CreationDate = '2013-07-12 09:08:18.0'` but stored values carry fractional/format variance, and 'well-finished' is mapped to `ClosedDate IS NOT NULL` returning 'yes' when the intended meaning is the opposite (a closed post is NOT well-finished). It also conflates comment time with post state.",
+      "fix_direction": "Add guidance: when filtering on a DATETIME to a given second, use a range or `strftime('%Y-%m-%d %H:%M:%S', col) = '...'` rather than raw equality; and for boolean/quality phrasings ('well-finished', 'closed'), consult the evidence note to confirm polarity of the flag before mapping (ClosedDate IS NULL typically = not closed)."
+    },
+    {
+      "taxonomy": "wrong_result",
+      "responsible_agent": "sql_writer",
+      "hypothesis": "For 'highest/top' questions SQLWriter uses global `MAX(...)` over an unfiltered/unaggregated table and applies unrelated filters simultaneously. Exemplar 3: `WHERE crossing = (SELECT MAX(crossing) FROM Player_Attributes) AND preferred_foot = 'left'` computes the global max crossing then filters by foot, rather than the max crossing among left-footed players, and ignores that Player_Attributes has multiple dated rows per player.",
+      "fix_direction": "Add guidance: apply all qualifying predicates (e.g. preferred_foot='left') inside the subquery that computes MAX so the extreme is taken over the qualifying population; and when a table has multiple time-stamped rows per entity, pick the latest row per player (e.g. via MAX(date) or a per-player subquery) before ranking."
+    },
+    {
+      "taxonomy": "wrong_result",
+      "responsible_agent": "sql_writer",
+      "hypothesis": "SQLWriter treats delimited multi-value TEXT columns and category filters loosely. Exemplar 2: `instr(cards.colors, 'B') > 0` for black plus `originalType LIKE '%Artifact%'` and `language != 'English'` — but 'Artifact' should likely use the `types`/canonical type field, black may need exact colors='B' vs. substring, and 'comes with foreign translation' should just require a foreign_data row, not language!='English' filtering.",
+      "fix_direction": "Add guidance: for comma/space-delimited value columns, match with explicit tokens (e.g. colors LIKE '%B%' only when confirmed delimiter, else exact equality); prefer the canonical type column indicated by evidence over `original*` variants; and interpret 'comes with foreign translation' as existence of a joined foreign_data row rather than adding a language inequality filter."
+    },
+    {
+      "taxonomy": "wrong_tables",
+      "responsible_agent": "schema_linker",
+      "hypothesis": "SchemaLinker omits the frequency/statement-type table and code-mapping needed for the question. Exemplar 3 ('weekly statements') never surfaces that `account.frequency` holds Czech codes like 'POPLATEK MESICNE' (monthly) — 'weekly' is a different code — and links male clients via client.gender without confirming the account.frequency mapping. Ratio questions also lose the currency/aggregation column selection (exemplar 1).",
+      "fix_direction": "Add to SchemaLinker memory: when a question references a coded categorical (statement frequency, segment, status), include the column plus its distinct code values in the handoff and note the code->label mapping from evidence (e.g. weekly = 'POPLATEK TYDNE'); always carry the exact filter column and its sample values, not just table names."
+    },
+    {
+      "taxonomy": "no_sql_executed",
+      "responsible_agent": "validator",
+      "hypothesis": "The pipeline terminates with no SQL when the model asks the user a clarifying question instead of committing. Exemplars 2 and 3 end with 'Quick clarification before I run the query...' / 'do you mean Australian or Chinese Grand Prix?', and exemplar 1 stops after only emitting a schema-linking plan with empty SQL ATTEMPTS. No query is ever handed to the Validator.",
+      "fix_direction": "Add guidance (SchemaLinker/SQLWriter): never ask the user for clarification in this batch setting — pick the most likely interpretation using the evidence note (e.g. treat garbled 'AustChineseralian' via the domain hint, default 'code' to drivers.code) and always emit an executable SELECT; the Validator should treat an empty SQL attempt as a failure and force a handoff back for a concrete query."
+    }
+  ]
+}
