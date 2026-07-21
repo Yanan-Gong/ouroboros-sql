@@ -23,8 +23,10 @@ def query(
     from agents.memory import SQLiteSession
 
     from .agents.topology import build_pipeline
+    from .bootstrap import configure_openai
     from .runner import run_one
 
+    configure_openai()
     pipeline = build_pipeline()
     session = SQLiteSession(f"cli-{db}") if interactive else None
 
