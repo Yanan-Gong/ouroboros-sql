@@ -34,7 +34,34 @@ Fine-tuning is out of scope by design — improvement happens in prompt-and-memo
 
 ## Status
 
-🚧 **Milestone 1 of 4** — agent system, guardrails, data pipeline, offline test suite. The eval harness (M2), strategy memory (M3), and optimizer loop (M4) land next; every results number that appears here will be regenerable by one command and backed by committed run artifacts. **No results are reported yet.**
+🚧 **Milestone 2 of 4 complete** — agent system + trajectory eval harness with a measured baseline (below). Next: strategy memory (M3) and the optimizer loop (M4). Every number below is regenerable by one command and backed by committed run artifacts in [`docs/results/`](docs/results/).
+
+## Baseline results (iteration 0)
+
+`val` split · 63 examples (3 adversarial probes) × 4 repeats = 252 records · 0 harness errors
+
+| Metric | Value [95% CI] |
+|---|---|
+| **Execution accuracy (A_mean)** | **48.8 [37.5, 60.0]** |
+| Aptitude (A90) | 58.5 [45.8, 70.7] |
+| Worst-case (A10) | 37.3 [26.2, 49.2] |
+| **Unreliability (U90)** | **21.2 [12.7, 30.3]** |
+| Judge score (mean) | 73.3 [67.7, 78.8] |
+| Refusal accuracy (adversarial) | 83.3 [50.0, 100.0] |
+| False-refusal rate | 0.0 |
+| Schema-grounding precision / recall | 92.1 / 97.1 |
+| Routing accuracy | 100.0 |
+| Completion rate | 91.2 [86.2, 95.4] |
+| Tokens per question (in+out) | 30.7k + 2.6k |
+| Latency p50 / p95 | 54s / 123s |
+
+Failure taxonomy (123 failing records): `wrong_result` 78 · `wrong_tables` 26 · `no_sql_executed` 19 · `guardrail_missed` 2
+
+**What the decomposition says.** The headline 48.8% hides two different problems. The 21-point U90 means a large share of questions *sometimes* succeed and sometimes don't — same input, same system. Aptitude (A90 = 58.5%) is ~10 points above A_mean: making the system merely *consistent* at its own demonstrated best would be worth about ten points before making it any smarter. Process metrics are already strong (routing 100%, schema grounding 92/97, completion 91%) — the failures live in SQL semantics (`wrong_result`, `wrong_tables`), which is where the optimizer loop will aim.
+
+**What didn't work (so far).** Judge–exec agreement is only 51% — the judge currently runs on the *same small model* as the agents (the only deployment on the eval endpoint), which violates the judge-should-be-stronger principle; treat process scores as weak signal until a frontier judge is wired in. Also, the harness's first smoke run caught two real bugs (runs silently ending on chatty non-handoff messages; false refusals from a database-blind guardrail) — fixed before this baseline, and the fix is visible in `git log`.
+
+<sub>Run `baseline-val-v0`, 2026-07-21. Agent+judge model: `gpt-5-mini`, N=4 repeats, golden-set seed 20260721, bootstrap CIs over instances (2000 draws). Reproduce: `uv run ouroboros eval --split val --repeats 4 --judge`. The holdout split remains untouched until the final M4 evaluation. Not comparable to BIRD leaderboard numbers: this evaluates a filtered 60-question slice of mini-dev (not the official 1,534-question dev set), reports the mean over 4 repeated runs instead of the official single-attempt protocol, and uses its own result-normalization rules rather than BIRD's official evaluation script.</sub>
 
 ## Quickstart
 

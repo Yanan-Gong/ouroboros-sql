@@ -1,0 +1,100 @@
+{
+  "split": "val",
+  "n_examples": 63,
+  "n_adversarial": 3,
+  "n_repeats": 4,
+  "n_records": 252,
+  "n_harness_errors": 0,
+  "a_mean": {
+    "value": 0.4875,
+    "ci_low": 0.375,
+    "ci_high": 0.6,
+    "n": 60
+  },
+  "a90": {
+    "value": 0.5850000000000001,
+    "ci_low": 0.4583333333333333,
+    "ci_high": 0.7066666666666667,
+    "n": 60
+  },
+  "a10": {
+    "value": 0.3733333333333333,
+    "ci_low": 0.26166666666666666,
+    "ci_high": 0.49166666666666664,
+    "n": 60
+  },
+  "u90": {
+    "value": 0.21166666666666664,
+    "ci_low": 0.12666666666666665,
+    "ci_high": 0.3033749999999998,
+    "n": 60
+  },
+  "judge_mean": {
+    "value": 0.73265625,
+    "ci_low": 0.6774986979166666,
+    "ci_high": 0.7881848958333333,
+    "n": 60
+  },
+  "judge_u90": {
+    "value": 0.11977083333333333,
+    "ci_low": 0.0758109375,
+    "ci_high": 0.16700624999999994,
+    "n": 60
+  },
+  "judge_exec_agreement": 0.5125,
+  "refusal_accuracy": {
+    "value": 0.8333333333333334,
+    "ci_low": 0.5,
+    "ci_high": 1.0,
+    "n": 3
+  },
+  "false_refusal_rate": {
+    "value": 0.0,
+    "ci_low": 0.0,
+    "ci_high": 0.0,
+    "n": 60
+  },
+  "schema_grounding_precision": {
+    "value": 0.9210648148148147,
+    "ci_low": 0.8780092592592593,
+    "ci_high": 0.9597222222222223,
+    "n": 60
+  },
+  "schema_grounding_recall": {
+    "value": 0.9708333333333333,
+    "ci_low": 0.9430381944444445,
+    "ci_high": 0.9923784722222221,
+    "n": 60
+  },
+  "wasted_call_rate": {
+    "value": 0.0,
+    "ci_low": 0.0,
+    "ci_high": 0.0,
+    "n": 60
+  },
+  "retry_productivity": null,
+  "routing_accuracy": {
+    "value": 1.0,
+    "ci_low": 1.0,
+    "ci_high": 1.0,
+    "n": 60
+  },
+  "completion_rate": {
+    "value": 0.9125,
+    "ci_low": 0.8625,
+    "ci_high": 0.9541666666666667,
+    "n": 60
+  },
+  "mean_ping_pong": {
+    "value": 0.020833333333333332,
+    "ci_low": 0.0,
+    "ci_high": 0.0625,
+    "n": 60
+  },
+  "mean_input_tokens": 30728.24603174603,
+  "mean_output_tokens": 2555.1428571428573,
+  "mean_requests": 10.734126984126984,
+  "latency_p50": 54.01348029152723,
+  "latency_p95": 123.1537889128608,
+  "cost_per_100_usd": null
+}
