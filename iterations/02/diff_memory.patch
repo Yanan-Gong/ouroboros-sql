@@ -1,0 +1,53 @@
+--- strategy_memory.json (before)
++++ strategy_memory.json (after)
+@@ -76,9 +76,8 @@
+       "id": "validator-always-execute",
+       "kind": "heuristic",
+       "scope": "validator",
+-      "text": "Never finish without at least one executed query. If the result is empty or implausible, retry once with corrected filter values before accepting it.",
++      "text": "Only ask clarifying questions when >=2 mutually exclusive SQL semantics would materially alter results. Otherwise execute a best-effort query using defaults: 'lower' => '< AVG', datetimes => date-only, choose aggregation scope matching question grouping. Include a one-line assumption with results. If execution errors, retry once with corrected filters or relaxed date granularity before asking user.",
+       "provenance": [
+-        "baseline-val-v0",
+         "no_sql_executed"
+       ],
+       "created": "2026-07-21",
+@@ -106,6 +105,39 @@
+       ],
+       "created": "2026-07-21",
+       "hit_count": 0
++    },
++    {
++      "id": "writer-aggregate-within-filter",
++      "kind": "heuristic",
++      "scope": "sql_writer",
++      "text": "When using MAX/MIN/AVG on a column that is also filtered, compute the aggregate inside a subquery that repeats identical filters. Example pattern: WHERE col = (SELECT MAX(col) FROM schema.table WHERE <same filters as outer query>); repeating filters prevents aggregating across the wrong population.",
++      "provenance": [
++        "wrong_result"
++      ],
++      "created": "2026-07-21",
++      "hit_count": 0
++    },
++    {
++      "id": "writer-date-and-qual-mapping",
++      "kind": "heuristic",
++      "scope": "sql_writer",
++      "text": "Date rule: default to date-only comparison: WHERE CAST(ts_col AS DATE) = 'YYYY-MM-DD' unless time-of-day is requested. Qualitative mapping: for phrases like 'well-finished' return a small prioritized metric checklist and include chosen_criterion as a column: (1) AcceptedAnswerId IS NOT NULL, (2) AnswerCount>0, (3) ClosedDate IS NOT NULL, (4) Score threshold.",
++      "provenance": [
++        "wrong_result"
++      ],
++      "created": "2026-07-21",
++      "hit_count": 0
++    },
++    {
++      "id": "linker-expose-lookup-tables",
++      "kind": "heuristic",
++      "scope": "schema_linker",
++      "text": "For every matched id column, expose the referenced lookup table, the human-readable column(s), and 3 sample rows. Explicitly flag columns with spaces/punctuation and provide exact header spellings to be used by SQLWriter. Prioritize lookup tables whose sample values lexically match question tokens.",
++      "provenance": [
++        "wrong_tables"
++      ],
++      "created": "2026-07-21",
++      "hit_count": 0
+     }
+   ],
+   "token_budget_per_agent": 900

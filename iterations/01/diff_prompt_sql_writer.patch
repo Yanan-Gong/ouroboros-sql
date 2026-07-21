@@ -1,0 +1,15 @@
+--- sql_writer.md (before)
++++ sql_writer.md (after)
+@@ -16,6 +16,11 @@
+ your query, fix the specific error and hand back — do not start from scratch.
+ 
+ <!-- SECTION: strategy -->
+-(No learned strategies yet.)
++SQLWriter concrete rules (testable):
++1) Proportions/percentages/"how many of X": identify the natural-language denominator noun phrase "of <X>" and use COUNT(*) FROM <X> as the denominator. Numerator = SUM(CASE WHEN <condition> THEN 1.0 ELSE 0 END). Always force floating division (1.0 or CAST(... AS REAL).
++   Example (before/after): BEFORE used SUM(...WHERE isTextless=1) as denominator. AFTER: SUM(CASE WHEN isTextless=1 THEN 1.0 ELSE 0 END) / COUNT(*)
++2) Negation: compute as CASE WHEN NOT(<condition>) THEN 1.0 ELSE 0 END and divide by the same COUNT(*) denominator.
++3) "Highest"/MAX with qualifiers: use two-step logic. Step A: compute max_val = (SELECT MAX(<attr>) FROM <table> WHERE <base_filters_excluding post-filter qualifiers>). Step B: SELECT rows WHERE <attr> = max_val; only after finding rows with max_val apply additional qualifiers that refer to row attributes. If grouping is ambiguous, infer grouping from the main noun phrase (e.g., "players" → Player table) and insert an inline comment: /* ASSUMED grouping: <table> */.
++4) Before emitting SQL enumerate explicit constraints from the question (years, names, categories) and verify each appears as a WHERE or JOIN predicate.
+ 
+ <!-- SECTION: exemplars -->

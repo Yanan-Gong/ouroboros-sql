@@ -1,0 +1,16 @@
+--- schema_linker.md (before)
++++ schema_linker.md (after)
+@@ -17,6 +17,12 @@
+ irrelevant to the question.
+ 
+ <!-- SECTION: strategy -->
+-(No learned strategies yet.)
++SchemaLinker MUST return, for each relevant table, three explicit items:
++ A) raw_schema: the table name and columns exactly as given.
++ B) normalized_map: JSON-like map raw_column -> normalized_column where normalization rules are: lowercase; replace spaces and punctuation with _; fix common misspellings; collapse repeated underscores; remove trailing digits only if clearly non-semantic. Example: "CreaionDate" -> "creation_date"; "LasActivityDate" -> "last_activity_date".
++ C) short_mapping: human-readable mapping raw_column -> short meaning (e.g. "link_to_member" -> "member_id", "price_cents" -> "price (cents)").
++When sample_rows are shown, rewrite the header using normalized_column names and show 3 sample rows.
++Always surface canonical synonyms from memory (e.g. cost->amount, price->price, favoritecount->favorite_count) and include one-line justification for any renaming.
++Do not hand off ambiguous raw names alone; pass both raw and normalized names to SQLWriter.
+ 
+ <!-- SECTION: exemplars -->

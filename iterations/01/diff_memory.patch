@@ -1,0 +1,58 @@
+--- strategy_memory.json (before)
++++ strategy_memory.json (after)
+@@ -16,10 +16,10 @@
+       "id": "writer-ratio-same-population",
+       "kind": "heuristic",
+       "scope": "sql_writer",
+-      "text": "For percentages and ratios, build numerator and denominator from the same filtered set and CAST to REAL: SUM(CASE WHEN cond THEN 1.0 ELSE 0 END) / COUNT(*) over identical rows. Integer division and mismatched denominators are the top causes of wrong results.",
++      "text": "For percentages/ratios: (1) identify the natural denominator noun phrase ('of X') and use COUNT(*) FROM X as denominator; (2) numerator = SUM(CASE WHEN <condition> THEN 1.0 ELSE 0 END); (3) ensure floating point division (1.0 or CAST AS REAL) to avoid integer truncation; (4) numerator and denominator must be computed over the same filtered rowset (apply identical base filters before any post-filter qualifiers). For negation compute CASE WHEN NOT(<condition>) THEN 1.0 ELSE 0 END.",
+       "provenance": [
+-        "baseline-val-v0",
+-        "wrong_result"
++        "wrong_result",
++        "baseline-val-v0"
+       ],
+       "created": "2026-07-21",
+       "hit_count": 0
+@@ -106,6 +106,41 @@
+       ],
+       "created": "2026-07-21",
+       "hit_count": 0
++    },
++    {
++      "id": "writer-max-scope",
++      "kind": "heuristic",
++      "scope": "sql_writer",
++      "text": "For 'highest', 'max', or 'top' requests combined with other qualifiers: use two-step logic. Step 1: compute max_val = (SELECT MAX(attr) FROM <table> WHERE <base_filters>). Step 2: SELECT rows WHERE attr = max_val; THEN apply additional qualifiers that filter row attributes. Do not include post-filter qualifiers in the MAX() aggregation unless they are clearly part of the MAX's grouping. If grouping is ambiguous, assume grouping from the main noun phrase and annotate with /* ASSUMED grouping: <table> */.",
++      "provenance": [
++        "wrong_result"
++      ],
++      "created": "2026-07-21",
++      "hit_count": 0
++    },
++    {
++      "id": "linker-normalize-and-annotate",
++      "kind": "heuristic",
++      "scope": "schema_linker",
++      "text": "Replace ad-hoc column handing with an explicit normalized_map and short_mapping in every handoff. Normalization = lowercase + underscores + common misspelling fixes. Provide human-readable alias for link fields (e.g., link_to_member -> member_id). Include normalized sample_rows headers. Surface canonical synonyms from memory so SQLWriter can match question nouns to normalized_column names.",
++      "provenance": [
++        "wrong_tables",
++        "baseline-val-v0"
++      ],
++      "created": "2026-07-21",
++      "hit_count": 0
++    },
++    {
++      "id": "validator-clarify-defaults",
++      "kind": "heuristic",
++      "scope": "validator",
++      "text": "Clarification rule: if required columns exist to express at least one plausible interpretation, do not ask the user to clarify. For SUM vs AVG choose AVG by default; if trivial, emit both AVG and SUM variants labeled accordingly. When using a default, include a single-line 'ASSUMED' note that the Summarizer should surface.",
++      "provenance": [
++        "no_sql_executed",
++        "baseline-val-v0"
++      ],
++      "created": "2026-07-21",
++      "hit_count": 0
+     }
+   ],
+   "token_budget_per_agent": 900

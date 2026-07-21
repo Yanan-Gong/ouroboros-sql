@@ -1,0 +1,54 @@
+{
+  "rationale": "I targeted the three largest failure modes: wrong aggregates/datetimes/qualitative mappings (SQLWriter), missing FK lookup tables/spacey column names (SchemaLinker), and excessive clarification/halting (Validator). The three prompt edits give deterministic, testable procedures (aggregate-in-filter pattern; date-normalization; lookup-table exposure; validator default rules) and the four memory upserts encode these patterns so agents apply them consistently, improving both mean accuracy and execution reliability (U90).",
+  "prompt_patches": [
+    {
+      "agent_key": "schema_linker",
+      "section": "strategy",
+      "new_text": "When mapping question tokens to schema objects, always surface lookup targets and exact spellings: 1) If a column name looks like an FK (ends with _id) or FK metadata exists, include the referenced table name, its human-readable column(s) (e.g. colour.colour, publisher.publisher_name), and 3 sample_rows from that table. 2) Prioritize tables whose sample values lexically match question entities (e.g. 'color','name','language'). 3) Explicitly list any columns with spaces or unusual punctuation and show exact sample values and the exact column header so SQLWriter can quote them. 4) For each matched id column produce a one-line mapping: FK_column -> referenced_table(human_column) and provide sample values. 5) Always hand off: exact column spellings, quoted names if needed, and the small sample_rows for any lookup tables."
+    },
+    {
+      "agent_key": "validator",
+      "section": "strategy",
+      "new_text": "Validator decision checklist (concrete): 1) Only ask the user a clarification if there are two or more mutually exclusive SQL semantics that would materially change results AND the question gives no clue to prefer one. 2) Otherwise pick a documented default and execute. Defaults: interpret comparative phrases like 'lower' as '< AVG(column)' unless user asks for a clinical threshold; interpret datetimes as date-only (CAST AS DATE) if time is not explicit; when multiple aggregation scopes are plausible, choose the scope that matches explicit grouping tokens in the question (e.g. 'by country' means GROUP BY country). 3) Always include a one-line assumption with the result (e.g. \"Assumption: interpreted 'lower' as below dataset average\"). 4) If execution fails, retry once with corrected filters or relaxed date granularity before asking the user. 5) Never return 'need clarification' as the final action for routine ambiguities."
+    }
+  ],
+  "memory_upserts": [
+    {
+      "id": "writer-aggregate-within-filter",
+      "kind": "heuristic",
+      "scope": "sql_writer",
+      "text": "When using MAX/MIN/AVG on a column that is also filtered, compute the aggregate inside a subquery that repeats identical filters. Example pattern: WHERE col = (SELECT MAX(col) FROM schema.table WHERE <same filters as outer query>); repeating filters prevents aggregating across the wrong population.",
+      "provenance": [
+        "wrong_result"
+      ]
+    },
+    {
+      "id": "writer-date-and-qual-mapping",
+      "kind": "heuristic",
+      "scope": "sql_writer",
+      "text": "Date rule: default to date-only comparison: WHERE CAST(ts_col AS DATE) = 'YYYY-MM-DD' unless time-of-day is requested. Qualitative mapping: for phrases like 'well-finished' return a small prioritized metric checklist and include chosen_criterion as a column: (1) AcceptedAnswerId IS NOT NULL, (2) AnswerCount>0, (3) ClosedDate IS NOT NULL, (4) Score threshold.",
+      "provenance": [
+        "wrong_result"
+      ]
+    },
+    {
+      "id": "linker-expose-lookup-tables",
+      "kind": "heuristic",
+      "scope": "schema_linker",
+      "text": "For every matched id column, expose the referenced lookup table, the human-readable column(s), and 3 sample rows. Explicitly flag columns with spaces/punctuation and provide exact header spellings to be used by SQLWriter. Prioritize lookup tables whose sample values lexically match question tokens.",
+      "provenance": [
+        "wrong_tables"
+      ]
+    },
+    {
+      "id": "validator-always-execute",
+      "kind": "heuristic",
+      "scope": "validator",
+      "text": "Only ask clarifying questions when >=2 mutually exclusive SQL semantics would materially alter results. Otherwise execute a best-effort query using defaults: 'lower' => '< AVG', datetimes => date-only, choose aggregation scope matching question grouping. Include a one-line assumption with results. If execution errors, retry once with corrected filters or relaxed date granularity before asking user.",
+      "provenance": [
+        "no_sql_executed"
+      ]
+    }
+  ],
+  "memory_deletes": []
+}
