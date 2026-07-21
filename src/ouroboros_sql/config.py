@@ -22,6 +22,17 @@ class Settings(BaseSettings):
     sql_timeout_seconds: float = 15.0
     sql_row_limit: int = 500
 
+    # Optional $ per 1M tokens (input, output) for cost columns. Left unset,
+    # tables report tokens only — never guess prices for custom endpoints.
+    price_in_per_million: float | None = None
+    price_out_per_million: float | None = None
+
+    @property
+    def cost_per_million(self) -> tuple[float, float] | None:
+        if self.price_in_per_million is None or self.price_out_per_million is None:
+            return None
+        return (self.price_in_per_million, self.price_out_per_million)
+
     @property
     def databases_dir(self) -> Path:
         return self.data_dir / "databases"

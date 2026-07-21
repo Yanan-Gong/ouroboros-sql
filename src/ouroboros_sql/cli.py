@@ -74,6 +74,46 @@ def list_dbs() -> None:
         console.print(db_id)
 
 
+@app.command()
+def eval(
+    split: str = typer.Option("val", help="Golden split: train | val | holdout"),
+    repeats: int = typer.Option(8, help="Repeat runs per example (reliability decomposition)"),
+    concurrency: int = typer.Option(8, help="Concurrent pipeline runs"),
+    limit: int = typer.Option(None, help="Only the first N examples (smoke tests)"),
+    judge: bool = typer.Option(False, help="Also score trajectories with the LLM judge"),
+    run_id: str = typer.Option(None, help="Resume/name a run directory"),
+) -> None:
+    """Run the golden set through the pipeline and compute trajectory metrics."""
+    from .bootstrap import configure_openai
+    from .eval.harness import run_eval
+    from .eval.schema import load_split, read_jsonl
+    from .eval.tables import to_markdown
+    from .eval.taxonomy import taxonomy_counts
+
+    configure_openai()
+    metrics, run_dir = asyncio.run(
+        run_eval(
+            split,
+            repeats=repeats,
+            concurrency=concurrency,
+            limit=limit,
+            with_judge=judge,
+            run_id=run_id,
+        )
+    )
+    markdown = to_markdown(metrics, run_dir.name)
+    (run_dir / "results.md").write_text(markdown + "\n")
+    console.print(markdown)
+
+    examples = load_split(split)  # type: ignore[arg-type]
+    counts = taxonomy_counts(read_jsonl(run_dir / "records.jsonl"), examples)
+    if counts:
+        console.print("\n[bold]Failure taxonomy[/bold]")
+        for label, count in counts.items():
+            console.print(f"  {label}: {count}")
+    console.print(f"\n[dim]artifacts: {run_dir}[/dim]")
+
+
 @app.command("download-data")
 def download_data() -> None:
     """Download the BIRD mini-dev SQLite databases (checksummed)."""
