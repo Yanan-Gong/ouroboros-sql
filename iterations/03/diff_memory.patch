@@ -1,57 +1,62 @@
 --- strategy_memory.json (before)
 +++ strategy_memory.json (after)
-@@ -142,6 +142,54 @@
-       ],
-       "created": "2026-07-21",
-       "hit_count": 0
-+    },
-+    {
-+      "id": "writer-extreme-within-population",
-+      "kind": "pitfall",
-+      "scope": "sql_writer",
-+      "text": "For 'highest/top/max/min' with additional predicates, place ALL qualifying filters inside the MAX/MIN subquery: WHERE col=(SELECT MAX(col) FROM t WHERE preferred_foot='left') AND preferred_foot='left'. A global MAX then filtering by foot returns the wrong extreme.",
-+      "provenance": [
-+        "wrong_result",
+@@ -138,6 +138,59 @@
+       "text": "Tables named _1k or with row counts far below the entity domain are samples; ranking/top-N over them is non-authoritative. Prefer the full table for 'top customer' style questions and warn the writer when only a sample exists.",
+       "provenance": [
+         "wrong_tables",
 +        "Ex3"
 +      ],
 +      "created": "2026-07-21",
 +      "hit_count": 0
 +    },
 +    {
-+      "id": "writer-latest-row-per-entity",
++      "id": "writer-datetime-and-polarity",
 +      "kind": "pitfall",
 +      "scope": "sql_writer",
-+      "text": "When a table has multiple dated rows per entity (e.g. Player_Attributes has many rows per player), select the latest row per entity (via MAX(date) subquery or correlated filter) before ranking or reading an attribute; otherwise you mix stale rows.",
++      "text": "DATETIME columns store trailing fractions ('2010-07-19 19:15:52.0'); never filter with = 'HH:MM:SS on YYYY/M/D' as a plain literal — use LIKE '2013-07-12 09:08:18%' or a range, or exact equality returns zero rows. For yes/no 'well-finished/closed/open' questions, map the boolean to the polarity the evidence note states; do NOT assume ClosedDate IS NOT NULL means the positive answer — read the evidence.",
 +      "provenance": [
 +        "wrong_result",
-+        "Ex3"
-+      ],
-+      "created": "2026-07-21",
-+      "hit_count": 0
-+    },
-+    {
-+      "id": "writer-flag-polarity",
-+      "kind": "pitfall",
-+      "scope": "sql_writer",
-+      "text": "For quality/boolean phrasings ('well-finished','closed','active') confirm flag polarity from the evidence note before mapping. A closed post (ClosedDate IS NOT NULL) is NOT well-finished; 'not closed' = ClosedDate IS NULL. Do not conflate a related timestamp (comment time) with entity state.",
-+      "provenance": [
-+        "wrong_result",
++        "sql_writer",
 +        "Ex1"
 +      ],
 +      "created": "2026-07-21",
 +      "hit_count": 0
 +    },
 +    {
-+      "id": "linker-coded-categorical-values",
-+      "kind": "heuristic",
-+      "scope": "schema_linker",
-+      "text": "When the question references a coded categorical (statement frequency, status, segment), include the filter column PLUS its distinct code values and the code->label mapping in the handoff (e.g. account.frequency: 'POPLATEK MESICNE'=monthly, 'POPLATEK TYDNE'=weekly). Do not hand off table names only.",
++      "id": "writer-superlative-entity-grain",
++      "kind": "pitfall",
++      "scope": "sql_writer",
++      "text": "When a table has multiple time-versioned rows per entity (e.g. Player_Attributes: many dated rows per player_api_id), do NOT apply WHERE col=(SELECT MAX(col) FROM t) over all snapshots — that counts attribute rows, not entities. First aggregate/reduce to entity grain (per-player latest or per-player MAX), then apply the superlative. Use WHERE col=(SELECT MAX...) only when the table is one-row-per-entity. COUNT DISTINCT the entity id.",
 +      "provenance": [
-+        "wrong_tables",
++        "wrong_result",
++        "sql_writer",
 +        "Ex3"
 +      ],
 +      "created": "2026-07-21",
 +      "hit_count": 0
-     }
-   ],
-   "token_budget_per_agent": 900
++    },
++    {
++      "id": "writer-ratio-cast-and-evidence",
++      "kind": "heuristic",
++      "scope": "sql_writer",
++      "text": "For any ratio/percentage/average-per-unit, CAST the numerator AS REAL before dividing: CAST(SUM(x) AS REAL)/SUM(y). Integer/integer truncates to 0. Re-read the evidence note to confirm the exact numerator and denominator definition (e.g. avg price per item = SUM(Price)/SUM(Amount) only if evidence says so) before emitting the expression.",
++      "provenance": [
++        "wrong_result",
++        "sql_writer",
++        "Ex1"
++      ],
++      "created": "2026-07-21",
++      "hit_count": 0
++    },
++    {
++      "id": "linker-categorical-value-mapping",
++      "kind": "heuristic",
++      "scope": "schema_linker",
++      "text": "When the question names a categorical value (a publisher name, gender, a 'weekly' frequency), find its coded literal in the lookup table via sample_rows and pass the exact mapping to the writer (account.frequency='POPLATEK TYDNE'=weekly; gender='F'=female). Enumerate EVERY join needed: multiple attribute columns each need their own lookup self-join (eye/hair/skin colour = three separate colour joins). Do not drop requested filter predicates.",
++      "provenance": [
++        "wrong_tables",
++        "schema_linker",
++        "Ex2",
+         "Ex3"
+       ],
+       "created": "2026-07-21",

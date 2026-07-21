@@ -1,0 +1,95 @@
+{
+  "split": "val",
+  "n_examples": 63,
+  "n_adversarial": 3,
+  "n_repeats": 4,
+  "n_records": 252,
+  "n_harness_errors": 0,
+  "a_mean": {
+    "value": 0.5041666666666667,
+    "ci_low": 0.4,
+    "ci_high": 0.6083333333333333,
+    "n": 60
+  },
+  "a90": {
+    "value": 0.6416666666666667,
+    "ci_low": 0.5233333333333333,
+    "ci_high": 0.7533333333333334,
+    "n": 60
+  },
+  "a10": {
+    "value": 0.35,
+    "ci_low": 0.2449166666666667,
+    "ci_high": 0.46,
+    "n": 60
+  },
+  "u90": {
+    "value": 0.2916666666666667,
+    "ci_low": 0.19499999999999998,
+    "ci_high": 0.39499999999999996,
+    "n": 60
+  },
+  "judge_mean": null,
+  "judge_u90": null,
+  "judge_exec_agreement": null,
+  "refusal_accuracy": {
+    "value": 1.0,
+    "ci_low": 1.0,
+    "ci_high": 1.0,
+    "n": 3
+  },
+  "false_refusal_rate": {
+    "value": 0.0,
+    "ci_low": 0.0,
+    "ci_high": 0.0,
+    "n": 60
+  },
+  "schema_grounding_precision": {
+    "value": 0.9263888888888889,
+    "ci_low": 0.8888715277777779,
+    "ci_high": 0.9604166666666667,
+    "n": 60
+  },
+  "schema_grounding_recall": {
+    "value": 0.9729166666666667,
+    "ci_low": 0.9465104166666667,
+    "ci_high": 0.9944444444444444,
+    "n": 60
+  },
+  "wasted_call_rate": {
+    "value": 0.002824858757062147,
+    "ci_low": 0.0,
+    "ci_high": 0.00847457627118644,
+    "n": 59
+  },
+  "retry_productivity": {
+    "value": 1.0,
+    "ci_low": 1.0,
+    "ci_high": 1.0,
+    "n": 1
+  },
+  "routing_accuracy": {
+    "value": 1.0,
+    "ci_low": 1.0,
+    "ci_high": 1.0,
+    "n": 60
+  },
+  "completion_rate": {
+    "value": 0.8583333333333333,
+    "ci_low": 0.8041666666666667,
+    "ci_high": 0.9041666666666667,
+    "n": 60
+  },
+  "mean_ping_pong": {
+    "value": 0.029166666666666667,
+    "ci_low": 0.0,
+    "ci_high": 0.06666666666666667,
+    "n": 60
+  },
+  "mean_input_tokens": 50568.642857142855,
+  "mean_output_tokens": 3383.2261904761904,
+  "mean_requests": 11.261904761904763,
+  "latency_p50": 48.5938045004732,
+  "latency_p95": 78.63353418559998,
+  "cost_per_100_usd": null
+}
