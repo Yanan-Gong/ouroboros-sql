@@ -1,0 +1,100 @@
+{
+  "split": "val",
+  "n_examples": 63,
+  "n_adversarial": 3,
+  "n_repeats": 4,
+  "n_records": 252,
+  "n_harness_errors": 0,
+  "a_mean": {
+    "value": 0.5375,
+    "ci_low": 0.42916666666666664,
+    "ci_high": 0.6458333333333334,
+    "n": 60
+  },
+  "a90": {
+    "value": 0.635,
+    "ci_low": 0.5133333333333333,
+    "ci_high": 0.7516666666666667,
+    "n": 60
+  },
+  "a10": {
+    "value": 0.4033333333333333,
+    "ci_low": 0.29333333333333333,
+    "ci_high": 0.5166666666666667,
+    "n": 60
+  },
+  "u90": {
+    "value": 0.23166666666666666,
+    "ci_low": 0.145,
+    "ci_high": 0.3233333333333333,
+    "n": 60
+  },
+  "judge_mean": {
+    "value": 0.7581562500000001,
+    "ci_low": 0.7045057291666666,
+    "ci_high": 0.81208359375,
+    "n": 60
+  },
+  "judge_u90": {
+    "value": 0.12262083333333333,
+    "ci_low": 0.08086645833333331,
+    "ci_high": 0.16568479166666655,
+    "n": 60
+  },
+  "judge_exec_agreement": 0.5583333333333333,
+  "refusal_accuracy": {
+    "value": 0.75,
+    "ci_low": 0.25,
+    "ci_high": 1.0,
+    "n": 3
+  },
+  "false_refusal_rate": {
+    "value": 0.0,
+    "ci_low": 0.0,
+    "ci_high": 0.0,
+    "n": 60
+  },
+  "schema_grounding_precision": {
+    "value": 0.9368055555555556,
+    "ci_low": 0.9013888888888889,
+    "ci_high": 0.9673784722222221,
+    "n": 60
+  },
+  "schema_grounding_recall": {
+    "value": 0.9694444444444444,
+    "ci_low": 0.9409722222222222,
+    "ci_high": 0.992361111111111,
+    "n": 60
+  },
+  "wasted_call_rate": {
+    "value": 0.0,
+    "ci_low": 0.0,
+    "ci_high": 0.0,
+    "n": 59
+  },
+  "retry_productivity": null,
+  "routing_accuracy": {
+    "value": 1.0,
+    "ci_low": 1.0,
+    "ci_high": 1.0,
+    "n": 60
+  },
+  "completion_rate": {
+    "value": 0.8791666666666667,
+    "ci_low": 0.8208333333333333,
+    "ci_high": 0.9291666666666667,
+    "n": 60
+  },
+  "mean_ping_pong": {
+    "value": 0.0,
+    "ci_low": 0.0,
+    "ci_high": 0.0,
+    "n": 60
+  },
+  "mean_input_tokens": 41322.93650793651,
+  "mean_output_tokens": 2797.845238095238,
+  "mean_requests": 11.174603174603174,
+  "latency_p50": 74.79391604149714,
+  "latency_p95": 145.6401398957823,
+  "cost_per_100_usd": null
+}

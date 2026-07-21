@@ -34,7 +34,7 @@ Fine-tuning is out of scope by design — improvement happens in prompt-and-memo
 
 ## Status
 
-🚧 **Milestone 2 of 4 complete** — agent system + trajectory eval harness with a measured baseline (below). Next: strategy memory (M3) and the optimizer loop (M4). Every number below is regenerable by one command and backed by committed run artifacts in [`docs/results/`](docs/results/).
+🚧 **Milestone 3 of 4 complete** — agent system, trajectory eval harness with a measured baseline, and a seeded strategy memory with a measured ablation (below). Next: the optimizer loop (M4). Every number below is regenerable by one command and backed by committed run artifacts in [`docs/results/`](docs/results/).
 
 ## Baseline results (iteration 0)
 
@@ -62,6 +62,24 @@ Failure taxonomy (123 failing records): `wrong_result` 78 · `wrong_tables` 26 �
 **What didn't work (so far).** Judge–exec agreement is only 51% — the judge currently runs on the *same small model* as the agents (the only deployment on the eval endpoint), which violates the judge-should-be-stronger principle; treat process scores as weak signal until a frontier judge is wired in. Also, the harness's first smoke run caught two real bugs (runs silently ending on chatty non-handoff messages; false refusals from a database-blind guardrail) — fixed before this baseline, and the fix is visible in `git log`.
 
 <sub>Run `baseline-val-v0`, 2026-07-21. Agent+judge model: `gpt-5-mini`, N=4 repeats, golden-set seed 20260721, bootstrap CIs over instances (2000 draws). Reproduce: `uv run ouroboros eval --split val --repeats 4 --judge`. The holdout split remains untouched until the final M4 evaluation. Not comparable to BIRD leaderboard numbers: this evaluates a filtered 60-question slice of mini-dev (not the official 1,534-question dev set), reports the mean over 4 repeated runs instead of the official single-attempt protocol, and uses its own result-normalization rules rather than BIRD's official evaluation script.</sub>
+
+## Ablation: seeded strategy memory (M3)
+
+Nine hand-written memory entries derived from the baseline failure analysis ([`scripts/seed_memory.py`](scripts/seed_memory.py) — each entry cites the failure class it targets), same protocol as baseline (val, N=4, judge):
+
+| | memory off (baseline) | memory on (9 seeded entries) |
+|---|---|---|
+| Execution accuracy (A_mean) | 48.8 [37.5, 60.0] | **53.8 [42.9, 64.6]** |
+| Aptitude (A90) | 58.5 | 63.5 |
+| Unreliability (U90) | 21.2 | 23.2 |
+| `wrong_result` failures | 78 | **60** |
+| `no_sql_executed` failures | 19 | 25 |
+| Tokens per question (in) | 30.7k | 41.3k |
+| Latency p50 | 54s | 75s |
+
+**Paired comparison** (same 60 instances, bootstrap over per-instance deltas): **+5.0 points, 95% CI [+0.4, +10.0]** — 15 instances improved, 6 regressed, 39 unchanged. The seeded heuristics did what they were written for: `wrong_result`, the class 6 of 9 entries target, dropped 23%. Honest trade-offs: prompts grew, so cost rose ~35% and latency ~40%; `no_sql_executed` ticked up (longer prompts appear to increase mid-pipeline stalls); U90 did not improve — consistency, the biggest single opportunity from the baseline, is untouched by static memory. That is the M4 optimizer's job.
+
+<sub>Run `ablation-val-memory-v1`, 2026-07-21, artifacts in [`docs/results/`](docs/results/). Reproduce: `uv run python scripts/seed_memory.py && uv run ouroboros eval --split val --repeats 4 --judge` (and `--no-memory` for the baseline arm).</sub>
 
 ## Quickstart
 
