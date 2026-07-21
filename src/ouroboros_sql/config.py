@@ -38,6 +38,10 @@ class Settings(BaseSettings):
         return self.data_dir / "databases"
 
     @property
+    def memory_path(self) -> Path:
+        return self.data_dir / "memory" / "strategy_memory.json"
+
+    @property
     def golden_dir(self) -> Path:
         return self.data_dir / "golden"
 
