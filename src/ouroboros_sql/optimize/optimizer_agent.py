@@ -12,6 +12,7 @@ from ..agents.memory import StrategyMemory, dump_for_prompt
 from ..agents.prompt_loader import PROMPTS_DIR, load_sections
 from ..config import settings
 from ..eval.report_agent import EvalReport, FailureAnalysis
+from ..models import resolve_model
 from .patches import (
     MAX_MEMORY_OPS,
     MAX_PROMPT_PATCHES,
@@ -103,7 +104,7 @@ async def propose_patchset(
         name="Optimizer",
         instructions=OPTIMIZER_INSTRUCTIONS,
         output_type=PatchSet,
-        model=settings.optimizer_model,
+        model=resolve_model(settings.optimizer_model),
     )
     base_input = render_optimizer_input(report, analysis, memory, prompts_dir)
     feedback = ""

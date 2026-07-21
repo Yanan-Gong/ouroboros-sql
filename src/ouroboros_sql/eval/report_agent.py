@@ -15,6 +15,7 @@ from agents import Agent, Runner
 from pydantic import BaseModel, Field
 
 from ..config import settings
+from ..models import resolve_model
 from .judge import render_trajectory
 from .metrics import compute_metrics
 from .schema import EvalRunRecord, load_split, read_jsonl
@@ -160,7 +161,7 @@ async def write_failure_analysis(report: EvalReport) -> FailureAnalysis:
         name="FailureAnalyst",
         instructions=ANALYST_INSTRUCTIONS,
         output_type=FailureAnalysis,
-        model=settings.optimizer_model,
+        model=resolve_model(settings.optimizer_model),
     )
     result = await Runner.run(analyst, render_report_for_analyst(report))
     return result.final_output_as(FailureAnalysis)
