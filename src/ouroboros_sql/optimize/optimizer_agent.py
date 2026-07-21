@@ -74,7 +74,9 @@ def render_optimizer_input(
     for key in ("orchestrator", "schema_linker", "sql_writer", "validator", "summarizer"):
         for section in load_sections(key, prompts_dir):
             if not section.frozen:
-                budget = section_budget(prompts_dir, key, section.name)
+                # Advertise headroom below the hard cap so a near-miss
+                # (the model rarely counts characters exactly) still fits.
+                budget = int(section_budget(prompts_dir, key, section.name) * 0.85)
                 lines.append(f"- {key}/{section.name}: {budget}")
     lines.append("\nCURRENT MUTABLE PROMPT SECTIONS:")
     for key in ("orchestrator", "schema_linker", "sql_writer", "validator", "summarizer"):
@@ -92,7 +94,7 @@ async def propose_patchset(
     analysis: FailureAnalysis,
     memory: StrategyMemory,
     prompts_dir=PROMPTS_DIR,
-    max_attempts: int = 2,
+    max_attempts: int = 3,
 ) -> PatchSet:
     """Propose a PatchSet; on a bounds violation, retry once with the exact
     error fed back (self-repair). Raises if the retry still violates bounds."""
@@ -115,8 +117,11 @@ async def propose_patchset(
             last_error = e
             feedback = (
                 f"\n\nYOUR PREVIOUS PATCHSET WAS REJECTED: {e}\n"
-                "Shrink the offending patch to fit its budget (or move the "
-                "guidance into memory entries) and output a corrected PatchSet."
+                "Obey every limit exactly: at most 3 prompt patches; at most 5 "
+                "memory operations TOTAL (upserts + deletes combined); each "
+                "new_text strictly within its advertised SECTION BUDGET. Cut "
+                "content or move it into memory entries. Output a corrected "
+                "PatchSet now."
             )
     assert last_error is not None
     raise last_error
