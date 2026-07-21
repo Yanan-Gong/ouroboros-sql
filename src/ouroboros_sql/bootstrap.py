@@ -13,7 +13,13 @@ from .config import REPO_ROOT
 
 
 def load_dotenv(path: Path | None = None) -> None:
-    """Minimal .env loader (no extra dependency); never overrides real env vars."""
+    """Minimal .env loader (no extra dependency).
+
+    The project's .env OVERRIDES inherited shell variables: a stale
+    ANTHROPIC_BASE_URL exported by an unrelated tool once silently routed
+    Azure credentials to api.anthropic.com. Within this process, the file
+    is the source of truth.
+    """
     path = path or REPO_ROOT / ".env"
     if not path.is_file():
         return
@@ -22,7 +28,7 @@ def load_dotenv(path: Path | None = None) -> None:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+        os.environ[key.strip()] = value.strip().strip('"').strip("'")
 
 
 def configure_openai() -> None:
