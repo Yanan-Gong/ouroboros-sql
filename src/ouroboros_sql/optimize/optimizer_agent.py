@@ -96,8 +96,9 @@ async def propose_patchset(
     prompts_dir=PROMPTS_DIR,
     max_attempts: int = 3,
 ) -> PatchSet:
-    """Propose a PatchSet; on a bounds violation, retry once with the exact
-    error fed back (self-repair). Raises if the retry still violates bounds."""
+    """Propose a PatchSet. On bounds violations, retries with the exact error
+    fed back; if still over-limit, returns the last attempt for the caller to
+    clamp via normalize_patchset."""
     optimizer = Agent(
         name="Optimizer",
         instructions=OPTIMIZER_INSTRUCTIONS,
@@ -106,7 +107,7 @@ async def propose_patchset(
     )
     base_input = render_optimizer_input(report, analysis, memory, prompts_dir)
     feedback = ""
-    last_error: Exception | None = None
+    patchset: PatchSet | None = None
     for _attempt in range(max_attempts):
         result = await Runner.run(optimizer, base_input + feedback)
         patchset = result.final_output_as(PatchSet)
@@ -114,7 +115,6 @@ async def propose_patchset(
             validate_patchset(patchset, prompts_dir)
             return patchset
         except ValueError as e:
-            last_error = e
             feedback = (
                 f"\n\nYOUR PREVIOUS PATCHSET WAS REJECTED: {e}\n"
                 "Obey every limit exactly: at most 3 prompt patches; at most 5 "
@@ -123,5 +123,7 @@ async def propose_patchset(
                 "content or move it into memory entries. Output a corrected "
                 "PatchSet now."
             )
-    assert last_error is not None
-    raise last_error
+    # Still over-limit after retries: return the last attempt — the caller
+    # clamps it with normalize_patchset (every clamp is logged, never silent).
+    assert patchset is not None
+    return patchset

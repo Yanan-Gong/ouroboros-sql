@@ -222,3 +222,76 @@ def rollback(
         (prompts_dir / f"{key}.md").write_text(content)
     memory = StrategyMemory.model_validate_json(snapshot.memory_json)
     memory.save(memory_path)
+
+
+def fit_text_to_budget(text: str, budget: int) -> tuple[str, int]:
+    """Clamp text to budget at line granularity (whole trailing lines dropped,
+    never mid-sentence). Returns (fitted_text, dropped_line_count)."""
+    if len(text) <= budget:
+        return text, 0
+    lines = text.splitlines()
+    kept: list[str] = []
+    total = 0
+    for line in lines:
+        cost = len(line) + 1
+        if total + cost > budget:
+            break
+        kept.append(line)
+        total += cost
+    return "\n".join(kept), len(lines) - len(kept)
+
+
+def normalize_patchset(
+    patchset: PatchSet, prompts_dir: Path = PROMPTS_DIR
+) -> tuple[PatchSet, list[str]]:
+    """Best-effort clamp of an over-limit PatchSet into its bounds.
+
+    Never silently: every clamp is reported in the returned notes. Oversized
+    prompt patches are trimmed to whole lines within budget (dropped entirely
+    if not even one line fits); memory ops beyond the cap are dropped in
+    order. The result always passes validate_patchset.
+    """
+    notes: list[str] = []
+    fitted_patches: list[PromptSectionPatch] = []
+    for patch in patchset.prompt_patches[:MAX_PROMPT_PATCHES]:
+        budget = section_budget(prompts_dir, patch.agent_key, patch.section)
+        fitted, dropped = fit_text_to_budget(patch.new_text, budget)
+        if not fitted.strip():
+            notes.append(
+                f"dropped patch {patch.agent_key}/{patch.section}: no line fits budget {budget}"
+            )
+            continue
+        if dropped:
+            notes.append(
+                f"trimmed {patch.agent_key}/{patch.section}: dropped {dropped} trailing "
+                f"line(s) to fit budget {budget}"
+            )
+        fitted_patches.append(
+            PromptSectionPatch(agent_key=patch.agent_key, section=patch.section, new_text=fitted)
+        )
+    if len(patchset.prompt_patches) > MAX_PROMPT_PATCHES:
+        notes.append(
+            f"dropped {len(patchset.prompt_patches) - MAX_PROMPT_PATCHES} prompt patch(es) "
+            f"over the {MAX_PROMPT_PATCHES}-patch cap"
+        )
+
+    upserts = list(patchset.memory_upserts)
+    deletes = list(patchset.memory_deletes)
+    total_ops = len(upserts) + len(deletes)
+    if total_ops > MAX_MEMORY_OPS:
+        # Deletes first (they free budget), then upserts in order.
+        kept_deletes = deletes[:MAX_MEMORY_OPS]
+        kept_upserts = upserts[: MAX_MEMORY_OPS - len(kept_deletes)]
+        notes.append(
+            f"dropped {total_ops - MAX_MEMORY_OPS} memory op(s) over the {MAX_MEMORY_OPS}-op cap"
+        )
+        deletes, upserts = kept_deletes, kept_upserts
+
+    normalized = PatchSet(
+        rationale=patchset.rationale,
+        prompt_patches=fitted_patches,
+        memory_upserts=upserts,
+        memory_deletes=deletes,
+    )
+    validate_patchset(normalized, prompts_dir)
+    return normalized, notes

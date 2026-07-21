@@ -26,7 +26,7 @@ from ..eval.harness import run_eval
 from ..eval.report_agent import build_eval_report, write_failure_analysis
 from ..eval.schema import EvalMetrics
 from .optimizer_agent import propose_patchset
-from .patches import GrowthCapExceeded, apply_patchset, rollback
+from .patches import apply_patchset, normalize_patchset, rollback
 
 ITERATIONS_DIR = REPO_ROOT / "iterations"
 
@@ -128,26 +128,21 @@ async def run_loop(
         (it_dir / "report.json").write_text(report.model_dump_json(indent=2))
         (it_dir / "analysis.json").write_text(analysis.model_dump_json(indent=2))
 
-        # 3. Propose (with one self-repair retry on bounds violations).
+        # 3. Propose (self-repair retries), then clamp into bounds — a
+        # formatting overrun trims lines, it no longer forfeits the iteration.
         log("optimizer proposing patchset...")
         memory = StrategyMemory.load()
-        try:
-            patchset = await propose_patchset(report, analysis, memory)
-        except (GrowthCapExceeded, ValueError) as e:
-            log(f"patchset rejected by bounds even after retry: {e}")
-            (it_dir / "decision.json").write_text(
-                json.dumps({"accepted": False, "reason": f"bounds: {e}"}, indent=2)
-            )
-            consecutive_rejections += 1
-            if consecutive_rejections >= config.stop_after_rejections:
-                break
-            continue
+        proposed = await propose_patchset(report, analysis, memory)
+        patchset, clamp_notes = normalize_patchset(proposed)
         (it_dir / "patchset.json").write_text(patchset.model_dump_json(indent=2))
+        if clamp_notes:
+            (it_dir / "clamp_notes.json").write_text(json.dumps(clamp_notes, indent=2))
+            log(f"clamped proposal: {'; '.join(clamp_notes)}")
         if patchset.is_empty:
-            log("optimizer proposed no changes; stopping.")
+            log("optimizer proposed no (applicable) changes; stopping.")
             break
 
-        # 4. Apply (already validated; apply is atomic), keep snapshot for rollback.
+        # 4. Apply (validated by normalize; atomic), keep snapshot for rollback.
         snapshot, diffs = apply_patchset(patchset)
         for name, diff in diffs.items():
             safe = name.replace(":", "_")

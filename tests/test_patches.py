@@ -170,3 +170,65 @@ def test_validate_patchset_no_writes(sandbox):
         ],
     )
     validate_patchset(ok, prompts_dir)  # no exception, no writes
+
+
+class TestNormalization:
+    def test_fit_drops_whole_lines_only(self):
+        from ouroboros_sql.optimize.patches import fit_text_to_budget
+
+        text = "- first tip\n- second tip\n- third tip"
+        fitted, dropped = fit_text_to_budget(text, budget=25)
+        assert fitted == "- first tip\n- second tip"[: len(fitted)]
+        assert fitted.endswith("tip")  # never mid-line
+        assert dropped >= 1
+        assert fit_text_to_budget("short", 100) == ("short", 0)
+
+    def test_normalize_clamps_oversized_patch_with_notes(self, sandbox):
+        prompts_dir, _memory_path = sandbox
+        big = "\n".join(f"- tip number {i} with some extra words" for i in range(100))
+        ps = PatchSet(
+            rationale="r",
+            prompt_patches=[
+                PromptSectionPatch(agent_key="sql_writer", section="strategy", new_text=big)
+            ],
+        )
+        from ouroboros_sql.optimize.patches import normalize_patchset, validate_patchset
+
+        normalized, notes = normalize_patchset(ps, prompts_dir)
+        validate_patchset(normalized, prompts_dir)  # always in bounds now
+        assert len(normalized.prompt_patches) == 1
+        assert len(normalized.prompt_patches[0].new_text) < len(big)
+        assert any("trimmed sql_writer/strategy" in n for n in notes)
+
+    def test_normalize_drops_excess_memory_ops_with_notes(self, sandbox):
+        prompts_dir, _memory_path = sandbox
+        ps = PatchSet(
+            rationale="r",
+            memory_upserts=[
+                MemoryUpsertOp(
+                    id=f"m{i}", kind="heuristic", scope="sql_writer", text="t", provenance=["p"]
+                )
+                for i in range(7)
+            ],
+            memory_deletes=["d1"],
+        )
+        from ouroboros_sql.optimize.patches import normalize_patchset
+
+        normalized, notes = normalize_patchset(ps, prompts_dir)
+        assert len(normalized.memory_upserts) + len(normalized.memory_deletes) == 5
+        assert normalized.memory_deletes == ["d1"]  # deletes kept first
+        assert any("memory op" in n for n in notes)
+
+    def test_normalize_noop_produces_no_notes(self, sandbox):
+        prompts_dir, _memory_path = sandbox
+        ps = PatchSet(
+            rationale="r",
+            prompt_patches=[
+                PromptSectionPatch(agent_key="sql_writer", section="strategy", new_text="- ok")
+            ],
+        )
+        from ouroboros_sql.optimize.patches import normalize_patchset
+
+        normalized, notes = normalize_patchset(ps, prompts_dir)
+        assert notes == []
+        assert normalized.prompt_patches[0].new_text == "- ok"
