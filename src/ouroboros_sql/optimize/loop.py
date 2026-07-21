@@ -128,20 +128,13 @@ async def run_loop(
         (it_dir / "report.json").write_text(report.model_dump_json(indent=2))
         (it_dir / "analysis.json").write_text(analysis.model_dump_json(indent=2))
 
-        # 3. Propose.
+        # 3. Propose (with one self-repair retry on bounds violations).
         log("optimizer proposing patchset...")
         memory = StrategyMemory.load()
-        patchset = await propose_patchset(report, analysis, memory)
-        (it_dir / "patchset.json").write_text(patchset.model_dump_json(indent=2))
-        if patchset.is_empty:
-            log("optimizer proposed no changes; stopping.")
-            break
-
-        # 4. Apply (bounded), keeping the snapshot for rollback.
         try:
-            snapshot, diffs = apply_patchset(patchset)
+            patchset = await propose_patchset(report, analysis, memory)
         except (GrowthCapExceeded, ValueError) as e:
-            log(f"patchset rejected by bounds: {e}")
+            log(f"patchset rejected by bounds even after retry: {e}")
             (it_dir / "decision.json").write_text(
                 json.dumps({"accepted": False, "reason": f"bounds: {e}"}, indent=2)
             )
@@ -149,6 +142,13 @@ async def run_loop(
             if consecutive_rejections >= config.stop_after_rejections:
                 break
             continue
+        (it_dir / "patchset.json").write_text(patchset.model_dump_json(indent=2))
+        if patchset.is_empty:
+            log("optimizer proposed no changes; stopping.")
+            break
+
+        # 4. Apply (already validated; apply is atomic), keep snapshot for rollback.
+        snapshot, diffs = apply_patchset(patchset)
         for name, diff in diffs.items():
             safe = name.replace(":", "_")
             (it_dir / f"diff_{safe}.patch").write_text(diff)

@@ -22,7 +22,7 @@ from ..agents.prompt_loader import MUTABLE_SECTIONS, PROMPTS_DIR
 MAX_PROMPT_PATCHES = 3
 MAX_MEMORY_OPS = 5
 GROWTH_FACTOR = 1.3
-MIN_SECTION_BUDGET_CHARS = 900
+MIN_SECTION_BUDGET_CHARS = 1200
 
 
 class PromptSectionPatch(BaseModel):
@@ -132,13 +132,36 @@ def take_snapshot(prompts_dir: Path = PROMPTS_DIR, memory_path: Path | None = No
     )
 
 
+def section_budget(prompts_dir: Path, agent_key: str, section: str) -> int:
+    """Character budget a patch to this section must fit (same rule as check_growth)."""
+    raw = (prompts_dir / f"{agent_key}.md").read_text()
+    sections = {name: body for name, _f, _m, body in load_sections_from_raw(raw)}
+    old_body = sections.get(section, "")
+    if old_body.strip().startswith("(No learned"):
+        old_body = ""
+    return max(int(len(old_body) * GROWTH_FACTOR), MIN_SECTION_BUDGET_CHARS)
+
+
+def validate_patchset(patchset: PatchSet, prompts_dir: Path = PROMPTS_DIR) -> None:
+    """Every bound, no writes. Raises on the first violation."""
+    patchset.validate_memory_budget()
+    for patch in patchset.prompt_patches:
+        budget = section_budget(prompts_dir, patch.agent_key, patch.section)
+        if len(patch.new_text) > budget:
+            raise GrowthCapExceeded(
+                f"{patch.agent_key}/{patch.section}: new text is {len(patch.new_text)} chars, "
+                f"budget {budget}"
+            )
+
+
 def apply_patchset(
     patchset: PatchSet,
     prompts_dir: Path = PROMPTS_DIR,
     memory_path: Path | None = None,
 ) -> tuple[Snapshot, dict[str, str]]:
-    """Apply after validating every bound. Returns (snapshot, diffs by artifact)."""
-    patchset.validate_memory_budget()
+    """Validate every bound first (atomic: nothing is written if any patch fails),
+    then apply. Returns (snapshot, diffs by artifact)."""
+    validate_patchset(patchset, prompts_dir)
     snapshot = take_snapshot(prompts_dir, memory_path)
     diffs: dict[str, str] = {}
 

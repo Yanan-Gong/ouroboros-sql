@@ -12,7 +12,13 @@ from ..agents.memory import StrategyMemory, dump_for_prompt
 from ..agents.prompt_loader import PROMPTS_DIR, load_sections
 from ..config import settings
 from ..eval.report_agent import EvalReport, FailureAnalysis
-from .patches import MAX_MEMORY_OPS, MAX_PROMPT_PATCHES, PatchSet
+from .patches import (
+    MAX_MEMORY_OPS,
+    MAX_PROMPT_PATCHES,
+    PatchSet,
+    section_budget,
+    validate_patchset,
+)
 
 OPTIMIZER_INSTRUCTIONS = f"""\
 You improve a multi-agent Text-to-SQL system by editing ONLY two things:
@@ -36,7 +42,10 @@ Produce ONE PatchSet:
   wrong answer.
 - Keep every instruction concrete and testable ("CAST the numerator AS REAL")
   rather than aspirational ("be more careful").
-- Total prompt growth is capped at 1.3x per section; do not pad.
+- HARD CHARACTER BUDGETS: each section patch has a maximum size listed in the
+  input under SECTION BUDGETS - a longer new_text is rejected outright. When
+  guidance will not fit a section budget, put it in memory entries instead
+  (memory is budgeted separately per agent at render time).
 
 Set rationale to 2-3 sentences: which issues you targeted and why these
 specific edits should move A_mean or U90.
@@ -61,6 +70,12 @@ def render_optimizer_input(
             f"- [{issue.taxonomy} -> {issue.responsible_agent}] {issue.hypothesis} "
             f"| fix direction: {issue.fix_direction}"
         )
+    lines.append("\nSECTION BUDGETS (max chars for new_text):")
+    for key in ("orchestrator", "schema_linker", "sql_writer", "validator", "summarizer"):
+        for section in load_sections(key, prompts_dir):
+            if not section.frozen:
+                budget = section_budget(prompts_dir, key, section.name)
+                lines.append(f"- {key}/{section.name}: {budget}")
     lines.append("\nCURRENT MUTABLE PROMPT SECTIONS:")
     for key in ("orchestrator", "schema_linker", "sql_writer", "validator", "summarizer"):
         for section in load_sections(key, prompts_dir):
@@ -77,14 +92,31 @@ async def propose_patchset(
     analysis: FailureAnalysis,
     memory: StrategyMemory,
     prompts_dir=PROMPTS_DIR,
+    max_attempts: int = 2,
 ) -> PatchSet:
+    """Propose a PatchSet; on a bounds violation, retry once with the exact
+    error fed back (self-repair). Raises if the retry still violates bounds."""
     optimizer = Agent(
         name="Optimizer",
         instructions=OPTIMIZER_INSTRUCTIONS,
         output_type=PatchSet,
         model=settings.optimizer_model,
     )
-    result = await Runner.run(
-        optimizer, render_optimizer_input(report, analysis, memory, prompts_dir)
-    )
-    return result.final_output_as(PatchSet)
+    base_input = render_optimizer_input(report, analysis, memory, prompts_dir)
+    feedback = ""
+    last_error: Exception | None = None
+    for _attempt in range(max_attempts):
+        result = await Runner.run(optimizer, base_input + feedback)
+        patchset = result.final_output_as(PatchSet)
+        try:
+            validate_patchset(patchset, prompts_dir)
+            return patchset
+        except ValueError as e:
+            last_error = e
+            feedback = (
+                f"\n\nYOUR PREVIOUS PATCHSET WAS REJECTED: {e}\n"
+                "Shrink the offending patch to fit its budget (or move the "
+                "guidance into memory entries) and output a corrected PatchSet."
+            )
+    assert last_error is not None
+    raise last_error
