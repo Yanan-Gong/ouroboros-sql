@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+dist/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Secrets & local config
+.env
+
+# Data: databases are downloaded, never committed (size + licensing)
+data/databases/
+data/raw/
+
+# Eval outputs (runs are local; accepted iteration artifacts live in iterations/)
+runs/

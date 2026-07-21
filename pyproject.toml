@@ -1,0 +1,64 @@
+[project]
+name = "ouroboros-sql"
+version = "0.1.0"
+description = "Multi-agent Text-to-SQL with a recursive self-improving loop: trajectory-level evaluation, failure reports, and an optimizer agent that evolves prompts and strategy memory."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Yanan Gong", email = "gongyn3@gmail.com" }]
+keywords = ["llm", "agents", "text-to-sql", "evaluation", "self-improvement", "openai-agents"]
+dependencies = [
+    "openai-agents>=0.2",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.2",
+    "sqlglot>=25.0",
+    "typer>=0.12",
+    "rich>=13.0",
+    "jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
+
+[project.scripts]
+ouroboros = "ouroboros_sql.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ouroboros_sql"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+check_untyped_defs = true
+warn_unused_ignores = true
+no_implicit_optional = true
+files = ["src"]
+
+[[tool.mypy.overrides]]
+module = ["agents.*", "sqlglot.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "live: tests that call the OpenAI API (deselected in CI)",
+]
+addopts = "-m 'not live'"
