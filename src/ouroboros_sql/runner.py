@@ -146,7 +146,7 @@ async def run_one(
     try:
         result = await Runner.run(
             pipeline.orchestrator,
-            question,
+            f"[Attached database: {db_id}] {question}",
             context=context,
             session=session,
             max_turns=max_turns or settings.max_turns,

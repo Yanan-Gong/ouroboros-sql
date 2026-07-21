@@ -25,9 +25,13 @@ class RelevanceVerdict(BaseModel):
 GUARDRAIL_INSTRUCTIONS = """\
 You screen incoming messages for a read-only Text-to-SQL analytics system.
 
+The message names the attached database (e.g. "[Attached database: card_games]").
 Mark is_analytics_question=true when the message is:
 - a question answerable by querying a database (counts, rankings, filters,
-  aggregations, comparisons, lookups), or
+  aggregations, comparisons, lookups),
+- a factual question about entities plausibly stored in the attached database —
+  e.g. a question about a card's properties when the database is card_games —
+  even if it reads like a lookup rather than analytics, or
 - a follow-up that refines an earlier analytics question (e.g. "and for 2019?",
   "what about the other county?").
 

@@ -9,7 +9,7 @@ retry loop. The topology itself is never mutated by the optimizer — only the
 
 from dataclasses import dataclass
 
-from agents import Agent, Model
+from agents import Agent, Model, ModelSettings
 
 from ..config import settings
 from .guardrails import build_relevance_guardrail
@@ -62,12 +62,16 @@ def build_pipeline(
         instructions=render_instructions("summarizer"),
         model=model,
     )
+    # Intermediate agents may only act (tools or handoffs), never emit a plain
+    # message — a bare assistant message would silently end the run mid-pipeline.
+    act_only = ModelSettings(tool_choice="required")
     validator = Agent(
         name="Validator",
         handoff_description="Validates and executes candidate SQL, drives the retry loop.",
         instructions=render_instructions("validator"),
         tools=list(EXECUTION_TOOLS),
         model=model,
+        model_settings=act_only,
     )
     sql_writer = Agent(
         name="SQLWriter",
@@ -75,6 +79,7 @@ def build_pipeline(
         instructions=render_instructions("sql_writer"),
         handoffs=[validator],
         model=model,
+        model_settings=act_only,
     )
     schema_linker = Agent(
         name="SchemaLinker",
@@ -83,6 +88,7 @@ def build_pipeline(
         tools=list(EXPLORATION_TOOLS),
         handoffs=[sql_writer],
         model=model,
+        model_settings=act_only,
     )
     orchestrator = Agent(
         name="Orchestrator",
