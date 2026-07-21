@@ -145,6 +145,50 @@ def report(
     console.print(f"\n[dim]artifacts: {run_dir}/report.json, analysis.json, analysis.md[/dim]")
 
 
+@app.command()
+def loop(
+    iterations: int = typer.Option(3, help="Max optimizer iterations"),
+    ref_run: str = typer.Option(..., help="Run id whose val metrics are the iteration-0 reference"),
+    train_limit: int = typer.Option(40, help="Train examples per iteration's failure sample"),
+    train_repeats: int = typer.Option(2),
+    val_repeats: int = typer.Option(4),
+    concurrency: int = typer.Option(8),
+    start_iteration: int = typer.Option(1),
+) -> None:
+    """Run the self-improvement loop: eval -> analyze -> patch -> gate -> repeat."""
+    from .bootstrap import configure_openai
+    from .config import settings
+    from .eval.schema import EvalMetrics
+    from .optimize.loop import LoopConfig, run_loop
+
+    configure_openai()
+    ref_path = settings.runs_dir / ref_run / "metrics.json"
+    if not ref_path.is_file():
+        raise typer.BadParameter(f"No metrics at {ref_path}")
+    ref = EvalMetrics.model_validate_json(ref_path.read_text())
+    decisions = asyncio.run(
+        run_loop(
+            LoopConfig(
+                max_iterations=iterations,
+                train_limit=train_limit,
+                train_repeats=train_repeats,
+                val_repeats=val_repeats,
+                concurrency=concurrency,
+            ),
+            ref,
+            start_iteration=start_iteration,
+        )
+    )
+    accepted = sum(1 for d in decisions if d.accepted)
+    console.print(f"\n[bold]{len(decisions)} iterations, {accepted} accepted[/bold]")
+    for i, d in enumerate(decisions, start_iteration):
+        mark = "[green]ACCEPT[/green]" if d.accepted else "[red]reject[/red]"
+        console.print(
+            f"  iter {i}: {mark} {d.reason} "
+            f"(A_mean {d.a_mean_ref:.3f}->{d.a_mean_new:.3f}, U90 {d.u90_ref:.3f}->{d.u90_new:.3f})"
+        )
+
+
 @app.command("download-data")
 def download_data() -> None:
     """Download the BIRD mini-dev SQLite databases (checksummed)."""
