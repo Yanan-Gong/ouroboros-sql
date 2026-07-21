@@ -118,6 +118,33 @@ def eval(
     console.print(f"\n[dim]artifacts: {run_dir}[/dim]")
 
 
+@app.command()
+def report(
+    run_id: str = typer.Argument(..., help="Run directory name under runs/"),
+) -> None:
+    """Analyze a finished eval run: failure taxonomy -> structured fix directions."""
+    from .bootstrap import configure_openai
+    from .config import settings
+    from .eval.report_agent import (
+        analysis_to_markdown,
+        build_eval_report,
+        write_failure_analysis,
+    )
+
+    configure_openai()
+    run_dir = settings.runs_dir / run_id
+    if not (run_dir / "records.jsonl").is_file():
+        raise typer.BadParameter(f"No records at {run_dir}")
+    eval_report = build_eval_report(run_dir)
+    (run_dir / "report.json").write_text(eval_report.model_dump_json(indent=2))
+    analysis = asyncio.run(write_failure_analysis(eval_report))
+    (run_dir / "analysis.json").write_text(analysis.model_dump_json(indent=2))
+    markdown = analysis_to_markdown(eval_report, analysis)
+    (run_dir / "analysis.md").write_text(markdown + "\n")
+    console.print(markdown)
+    console.print(f"\n[dim]artifacts: {run_dir}/report.json, analysis.json, analysis.md[/dim]")
+
+
 @app.command("download-data")
 def download_data() -> None:
     """Download the BIRD mini-dev SQLite databases (checksummed)."""
