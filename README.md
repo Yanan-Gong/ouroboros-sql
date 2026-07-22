@@ -34,7 +34,9 @@ Fine-tuning is out of scope by design — improvement happens in prompt-and-memo
 
 ## Status
 
-🚧 **Milestone 3 of 4 complete** — agent system, trajectory eval harness with a measured baseline, and a seeded strategy memory with a measured ablation (below). Next: the optimizer loop (M4). Every number below is regenerable by one command and backed by committed run artifacts in [`docs/results/`](docs/results/).
+✅ **All four milestones complete** — agent system, trajectory eval harness, strategy memory, and the closed self-improvement loop, with final held-out results below. Every number is regenerable by one command and backed by committed run artifacts in [`docs/results/`](docs/results/) and [`iterations/`](iterations/).
+
+![Learning curve](docs/results/learning_curve.svg)
 
 ## Baseline results (iteration 0)
 
@@ -122,9 +124,34 @@ uv run ouroboros query --interactive --db california_schools
 - **LLM-as-judge** trajectory rubric, anchored: the judge never overturns execution match, and judge–exec agreement is reported.
 - **Cost & latency** in every table.
 
-## The self-improvement loop (M4)
+## The self-improvement loop (M4) — what actually happened
 
-Eval on train → deterministic failure taxonomy → report agent → optimizer proposes bounded patches (strategy/exemplar prompt sections only; memory upserts with provenance) → re-eval on val → **accept only if accuracy or reliability improves** → repeat until convergence or budget. Topology, tools, guardrails, and the judge are never mutated — optimizing the judge is reward hacking.
+Eval on train → deterministic failure taxonomy → analyst agent → optimizer proposes bounded patches (strategy/exemplar prompt sections only; memory ops with provenance) → re-eval on val → **accept only if accuracy or reliability improves** (pre-registered gate: A_mean +≥1pt, or U90 −≥2pts at A_mean ≥−0.5pt; safety brake on false-refusal spikes) → rollback on reject. Topology, tools, guardrails, and the judge are never mutated — optimizing the judge is reward hacking.
+
+**Results.** With a small model as optimizer: 2 iterations, 0 accepted — every patch regressed val and the gate rolled each back. With a frontier optimizer (Claude Opus 4.8) on the same failure reports and the same bounds: **3 iterations, 1 accepted — val A_mean 53.8 → 55.4 (+1.7)** at unchanged U90, targeting phrase-to-column mapping and multi-valued TEXT membership in the SQLWriter plus SQL-only handoffs in the SchemaLinker. Its other two proposals were rejected on merit (−1.7 and −5.0 A_mean) and rolled back. Every iteration's patchset, unified diffs, val metrics, and decision are committed under [`iterations/`](iterations/).
+
+**Final held-out result** (untouched split, evaluated once at the end, both arms pre-declared):
+
+| | iteration-0 (no memory) | final state (memory + accepted patch) |
+|---|---|---|
+| Execution accuracy (A_mean) | 39.2 [27.9, 50.8] | 42.5 [30.8, 53.8] |
+| Aptitude (A90) | 43.3 | 49.0 |
+| Unreliability (U90) | 10.3 | 13.7 |
+
+Paired over the same 60 instances: **+3.3 points, 95% CI [−1.7, +8.8]** — 9 instances improved, 4 regressed. Directionally consistent with the val gains, but the interval includes zero: at this sample size the held-out improvement is *suggestive, not confirmed*. We report it that way on purpose. (The holdout split is also visibly harder than val — 39.2 vs 48.8 at iteration 0 — a reminder of how much 60-example splits vary.)
+
+**What building the loop taught us** (all visible in `git log`):
+
+- *A cage without feedback just stops the learner.* Three early runs stalled because the small optimizer model could not count characters against prompt budgets (1971 and 1532 chars vs a 1200 cap, even with the error fed back). The fix wasn't better prompting — it was mechanical: advertise headroom, retry with the exact violation, and finally clamp oversized patches at whole-line granularity with every clamp logged. Formatting can no longer forfeit an iteration; the val gate stays the only judge of quality.
+- *Cache keys must encode state.* The harness resumes evals from cached records by run id; date-based loop ids let a relaunched gate silently "evaluate" a new patchset using a previous attempt's records — byte-identical metrics were the tell. Loop run ids now embed a hash of the mutable state (prompts + memory), so a cache hit is only possible for an identical system.
+- *The gate is the product.* Across both optimizer models, 5 of 6 proposed patchsets would have made the system worse. The loop's chief value this round was not the +1.7 it found — it was the −10+ points of regressions it refused, automatically, with byte-exact rollback.
+
+## Limitations & future work
+
+- **Judge = worker model** (only deployment on the eval endpoint): 51% judge–exec agreement makes process scores weak signal. A frontier judge is the first upgrade.
+- **60-example splits** give ±11-point CIs; the val-confirmed gains (+5.0 memory, +1.7 optimizer, both paired-significant on val) need a larger holdout to confirm out-of-sample.
+- **U90 remains untouched** (21 points on val): static prompt/memory edits bought accuracy, not consistency. Candidate attacks: self-consistency voting in the Validator, or "consolidate-and-retry" per Lost-in-Multi-Turn's own advice.
+- **Agent0-style curriculum** ([arXiv:2511.16043](https://arxiv.org/abs/2511.16043)): let a curriculum agent generate targeted hard cases at the executor's frontier instead of resampling a fixed train split.
 
 ## Development
 
