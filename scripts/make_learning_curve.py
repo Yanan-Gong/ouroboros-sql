@@ -23,10 +23,9 @@ REJECTED: list[tuple[str, str]] = [
     # (label, run dir) — drawn as open points at their sequence position
 ]
 
-W, H = 760, 420
-ML, MR, MT, MB = 70, 30, 40, 90
+W, H = 760, 470
+ML, MR, MT, MB = 70, 30, 40, 118
 PLOT_W, PLOT_H = W - ML - MR, H - MT - MB
-Y_MIN, Y_MAX = 0.40, 0.65
 
 
 def load_metrics(run: str) -> dict:
@@ -41,13 +40,29 @@ def x_at(i: int, n: int) -> float:
     return ML + PLOT_W * (i + 0.5) / n
 
 
-def y_at(v: float) -> float:
-    return MT + PLOT_H * (1 - (v - Y_MIN) / (Y_MAX - Y_MIN))
+def y_bounds(stages: list) -> tuple[float, float]:
+    """Fit the axis to the data including CI whiskers, on 5% gridlines."""
+    lows = [m["a_mean"].get("ci_low", m["a_mean"]["value"]) for _l, m, _a in stages]
+    highs = [m["a_mean"].get("ci_high", m["a_mean"]["value"]) for _l, m, _a in stages]
+    lo = min(v for v in lows if v is not None)
+    hi = max(v for v in highs if v is not None)
+    import math
+
+    return math.floor(lo * 20) / 20, math.ceil(hi * 20) / 20
+
+
+def make_y_at(y_min: float, y_max: float):
+    def y_at(v: float) -> float:
+        return MT + PLOT_H * (1 - (v - y_min) / (y_max - y_min))
+
+    return y_at
 
 
 def main() -> None:
     stages = [(label, load_metrics(run), accepted) for label, run, accepted in STAGES]
     n = len(stages)
+    y_min, y_max = y_bounds(stages)
+    y_at = make_y_at(y_min, y_max)
 
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
@@ -57,8 +72,8 @@ def main() -> None:
         "Execution accuracy (A_mean) on val across system states</text>",
     ]
     # y grid
-    v = Y_MIN
-    while v <= Y_MAX + 1e-9:
+    v = y_min
+    while v <= y_max + 1e-9:
         y = y_at(v)
         parts.append(
             f'<line x1="{ML}" y1="{y:.1f}" x2="{W - MR}" y2="{y:.1f}" '
@@ -104,9 +119,14 @@ def main() -> None:
             )
 
     parts.append(
-        f'<text x="{ML}" y="{H - 12}" fill="#9ca3af" font-size="11">'
+        f'<text x="{ML}" y="{H - 26}" fill="#9ca3af" font-size="11">'
         "Whiskers: bootstrap 95% CI over instances. Same protocol throughout: "
-        "val split, N=4 repeats. Rejected optimizer candidates not shown; see iterations/.</text>"
+        "val split, N=4 repeats.</text>"
+    )
+    parts.append(
+        f'<text x="{ML}" y="{H - 10}" fill="#9ca3af" font-size="11">'
+        "Rejected optimizer candidates not shown; see iterations/ for their metrics "
+        "and decisions.</text>"
     )
     parts.append("</svg>")
 
