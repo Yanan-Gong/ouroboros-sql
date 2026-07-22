@@ -1,0 +1,13 @@
+{
+  "run_id": "loop-2026-07-21-it02-val-63775d9f41",
+  "split": "val",
+  "n_repeats": 4,
+  "limit": null,
+  "agent_model": "gpt-5-mini",
+  "judge_model": null,
+  "base_url_host": null,
+  "seed": 0,
+  "memory_entries": 12,
+  "started_at": "2026-07-21T21:46:33.196381+00:00",
+  "package_version": "0.1.0"
+}

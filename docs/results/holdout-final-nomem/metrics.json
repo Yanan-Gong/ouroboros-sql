@@ -1,0 +1,105 @@
+{
+  "split": "holdout",
+  "n_examples": 63,
+  "n_adversarial": 3,
+  "n_repeats": 4,
+  "n_records": 252,
+  "n_harness_errors": 8,
+  "a_mean": {
+    "value": 0.39166666666666666,
+    "ci_low": 0.2791666666666667,
+    "ci_high": 0.5083333333333333,
+    "n": 60
+  },
+  "a90": {
+    "value": 0.43333333333333335,
+    "ci_low": 0.31666666666666665,
+    "ci_high": 0.5666666666666667,
+    "n": 60
+  },
+  "a10": {
+    "value": 0.33,
+    "ci_low": 0.22,
+    "ci_high": 0.4433749999999998,
+    "n": 60
+  },
+  "u90": {
+    "value": 0.10333333333333332,
+    "ci_low": 0.04,
+    "ci_high": 0.17833333333333332,
+    "n": 60
+  },
+  "judge_mean": {
+    "value": 0.6835416666666667,
+    "ci_low": 0.6259869791666667,
+    "ci_high": 0.7417382812499999,
+    "n": 60
+  },
+  "judge_u90": {
+    "value": 0.08149999999999999,
+    "ci_low": 0.04989218749999999,
+    "ci_high": 0.11952135416666665,
+    "n": 60
+  },
+  "judge_exec_agreement": 0.4666666666666667,
+  "refusal_accuracy": {
+    "value": 0.3333333333333333,
+    "ci_low": 0.0,
+    "ci_high": 1.0,
+    "n": 3
+  },
+  "false_refusal_rate": {
+    "value": 0.0,
+    "ci_low": 0.0,
+    "ci_high": 0.0,
+    "n": 60
+  },
+  "schema_grounding_precision": {
+    "value": 0.9213888888888888,
+    "ci_low": 0.8804097222222224,
+    "ci_high": 0.9561145833333333,
+    "n": 60
+  },
+  "schema_grounding_recall": {
+    "value": 0.961111111111111,
+    "ci_low": 0.9333333333333333,
+    "ci_high": 0.9840277777777777,
+    "n": 60
+  },
+  "wasted_call_rate": {
+    "value": 0.00972222222222222,
+    "ci_low": 0.0020833333333333333,
+    "ci_high": 0.01944444444444444,
+    "n": 60
+  },
+  "retry_productivity": {
+    "value": 1.0,
+    "ci_low": 1.0,
+    "ci_high": 1.0,
+    "n": 4
+  },
+  "routing_accuracy": {
+    "value": 1.0,
+    "ci_low": 1.0,
+    "ci_high": 1.0,
+    "n": 60
+  },
+  "completion_rate": {
+    "value": 0.8791666666666667,
+    "ci_low": 0.8333333333333334,
+    "ci_high": 0.9208333333333333,
+    "n": 60
+  },
+  "mean_ping_pong": {
+    "value": 0.025,
+    "ci_low": 0.0,
+    "ci_high": 0.058333333333333334,
+    "n": 60
+  },
+  "mean_input_tokens": 41205.369047619046,
+  "mean_output_tokens": 3330.9603174603176,
+  "mean_requests": 11.357142857142858,
+  "latency_p50": 49.54110989545006,
+  "latency_p95": 81.02218651454314,
+  "cost_per_100_usd": null
+}

@@ -1,0 +1,90 @@
+{
+  "split": "val",
+  "n_examples": 63,
+  "n_adversarial": 3,
+  "n_repeats": 4,
+  "n_records": 252,
+  "n_harness_errors": 0,
+  "a_mean": {
+    "value": 0.5541666666666667,
+    "ci_low": 0.44583333333333336,
+    "ci_high": 0.6625,
+    "n": 60
+  },
+  "a90": {
+    "value": 0.6583333333333333,
+    "ci_low": 0.5416666666666666,
+    "ci_high": 0.77,
+    "n": 60
+  },
+  "a10": {
+    "value": 0.4266666666666667,
+    "ci_low": 0.3182916666666667,
+    "ci_high": 0.545,
+    "n": 60
+  },
+  "u90": {
+    "value": 0.23166666666666666,
+    "ci_low": 0.15,
+    "ci_high": 0.32333333333333336,
+    "n": 60
+  },
+  "judge_mean": null,
+  "judge_u90": null,
+  "judge_exec_agreement": null,
+  "refusal_accuracy": {
+    "value": 0.9166666666666666,
+    "ci_low": 0.75,
+    "ci_high": 1.0,
+    "n": 3
+  },
+  "false_refusal_rate": {
+    "value": 0.0,
+    "ci_low": 0.0,
+    "ci_high": 0.0,
+    "n": 60
+  },
+  "schema_grounding_precision": {
+    "value": 0.9338888888888889,
+    "ci_low": 0.8958333333333334,
+    "ci_high": 0.9670833333333333,
+    "n": 60
+  },
+  "schema_grounding_recall": {
+    "value": 0.9736111111111111,
+    "ci_low": 0.9458333333333333,
+    "ci_high": 0.9944444444444444,
+    "n": 60
+  },
+  "wasted_call_rate": {
+    "value": 0.0,
+    "ci_low": 0.0,
+    "ci_high": 0.0,
+    "n": 60
+  },
+  "retry_productivity": null,
+  "routing_accuracy": {
+    "value": 1.0,
+    "ci_low": 1.0,
+    "ci_high": 1.0,
+    "n": 60
+  },
+  "completion_rate": {
+    "value": 0.8916666666666667,
+    "ci_low": 0.8458333333333333,
+    "ci_high": 0.9333333333333333,
+    "n": 60
+  },
+  "mean_ping_pong": {
+    "value": 0.03333333333333333,
+    "ci_low": 0.0,
+    "ci_high": 0.075,
+    "n": 60
+  },
+  "mean_input_tokens": 49291.53571428572,
+  "mean_output_tokens": 3388.313492063492,
+  "mean_requests": 11.579365079365079,
+  "latency_p50": 52.61802475055447,
+  "latency_p95": 80.44377791233129,
+  "cost_per_100_usd": null
+}
