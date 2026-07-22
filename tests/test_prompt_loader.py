@@ -29,8 +29,15 @@ def test_render_produces_nonempty_instructions(key: str):
     assert "SECTION" not in text  # markers never leak into instructions
 
 
-def test_placeholder_strategy_sections_are_dropped():
-    text = render_instructions("sql_writer")
+def test_placeholder_strategy_sections_are_dropped(tmp_path: Path):
+    # Live prompt files legitimately accumulate optimizer content, so test the
+    # placeholder-dropping behavior on a pristine fixture file instead.
+    (tmp_path / "pristine.md").write_text(
+        "<!-- SECTION: role (frozen) -->\nDo the task.\n"
+        "<!-- SECTION: strategy -->\n(No learned strategies yet.)\n"
+        "<!-- SECTION: exemplars -->\n"
+    )
+    text = render_instructions("pristine", prompts_dir=tmp_path)
     assert "No learned strategies" not in text
     assert "## Learned strategies" not in text
 

@@ -48,7 +48,10 @@ def test_memory_appears_in_matching_agent_only():
     assert "sample_rows on every column" in linker
     assert "## Learned strategies" in linker
 
-    assert "## Learned strategies" not in summarizer  # no entries for it
+    # No summarizer entries in this memory: none of its text may leak there.
+    # (The file's own strategy section may hold optimizer content — that's fine.)
+    assert "CAST the numerator AS REAL" not in summarizer
+    assert "sample_rows on every column" not in summarizer
 
 
 def test_no_memory_means_unchanged_instructions():
